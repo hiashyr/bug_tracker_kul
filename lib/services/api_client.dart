@@ -1,19 +1,26 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'package:trying_flutter/models/comment.dart';
-import 'package:trying_flutter/models/status.dart';
-import 'package:trying_flutter/services/logging.dart';
-import '../models/issue.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+
+import '../models/comment.dart';
+import '../models/issue.dart';
+import '../models/status.dart';
+import '../services/api_exceptions.dart';
+import '../services/logging.dart';
 
 class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
   final String _token = dotenv.get('TOKEN');
+  final http.Client _client;
 
-  // Используем кастомный клиент вместо обычного
-  final http.Client _client = LoggingClient();
+  ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
+
+  static const Duration _requestTimeout = Duration(seconds: 15);
 
   Map<String, String> get _headers => {
     'Authorization': 'OAuth $_token',
@@ -22,96 +29,182 @@ class ApiClient {
     'X-Cloud-Org-Id': _orgId,
   };
 
-  // Метод для получения одной задачи
   Future<Issue> fetchIssue(String issueId) async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/issues/$issueId'),
-      headers: _headers
+    final response = await _sendRequest(
+      () =>
+          _client.get(Uri.parse('$baseUrl/issues/$issueId'), headers: _headers),
+      action: 'получение задачи',
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      return Issue.fromJson(jsonData);
-    } else {
-      throw Exception('Ошибка получения одной задачи: ${response.statusCode}');
-    }
+    _validateStatus(response, 200, action: 'fetchIssue');
+    return _decodeJson(
+      response.body,
+      (json) => Issue.fromJson(json as Map<String, dynamic>),
+      action: 'получение задачи',
+    );
   }
 
-  // Метод для получения статусов по задаче
   Future<List<Status>> fetchStatuses(String issueId) async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/issues/$issueId/transitions'),
-      headers: _headers,
+    final response = await _sendRequest(
+      () => _client.get(
+        Uri.parse('$baseUrl/issues/$issueId/transitions'),
+        headers: _headers,
+      ),
+      action: 'получение статусов',
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Status.fromJson(json)).toList();
-    } else {
-      throw Exception('Ошибка загрузки статусов: ${response.statusCode}');
-    }
+    _validateStatus(response, 200, action: 'fetchStatuses');
+    return _decodeJson(response.body, (json) {
+      final list = json as List<dynamic>;
+      return list
+          .map((item) => Status.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }, action: 'fetchStatuses');
   }
 
-  // Получение комментариев
   Future<List<Comment>> fetchComments(String issueId) async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/issues/$issueId/comments'),
-      headers: _headers,
+    final response = await _sendRequest(
+      () => _client.get(
+        Uri.parse('$baseUrl/issues/$issueId/comments'),
+        headers: _headers,
+      ),
+      action: 'получение комментариев',
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Comment.fromJson(json)).toList();
-    } else {
-      throw Exception('Ошибка загрузки комментариев: ${response.statusCode}');
-    }
+    _validateStatus(response, 200, action: 'fetchComments');
+    return _decodeJson(response.body, (json) {
+      final list = json as List<dynamic>;
+      return list
+          .map((item) => Comment.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }, action: 'fetchComments');
   }
 
-  // Добавление комментария
   Future<Comment> addingComment(String issueId, String commentText) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/issues/$issueId/comments'),
-      headers: _headers,
-      body: jsonEncode({"text": commentText}),
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse('$baseUrl/issues/$issueId/comments'),
+        headers: _headers,
+        body: jsonEncode({'text': commentText}),
+      ),
+      action: 'добавление комментария',
     );
 
-    if (response.statusCode == 201) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      return Comment.fromJson(jsonData);
-    } else {
-      throw Exception('Ошибка добавления комментария: ${response.statusCode}');
-    }
+    _validateStatus(response, 201, action: 'addingComment');
+    return _decodeJson(
+      response.body,
+      (json) => Comment.fromJson(json as Map<String, dynamic>),
+      action: 'addingComment',
+    );
   }
 
-  // Получение списка задач
   Future<List<Issue>> showIssues() async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/issues/_search?expand=transitions'),
-      headers: _headers,
-      body: jsonEncode({
-        "filter": {
-          "queue": "DEV",
-          "status": "readyForTest"
-        },
-        "order": "+status"
-      }),
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse('$baseUrl/issues/_search?expand=transitions'),
+        headers: _headers,
+        body: jsonEncode({
+          'filter': {'queue': 'DEV', 'status': 'readyForTest'},
+          'order': '+status',
+        }),
+      ),
+      action: 'получение списка задач',
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Issue.fromJson(json)).toList();
-    } else {
-      throw Exception('Ошибка получения списка задач: ${response.statusCode}');
+    _validateStatus(response, 200, action: 'showIssues');
+    return _decodeJson(response.body, (json) {
+      final list = json as List<dynamic>;
+      return list
+          .map((item) => Issue.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }, action: 'showIssues');
+  }
+
+  Future<http.Response> _sendRequest(
+    Future<http.Response> Function() requestFn, {
+    required String action,
+  }) async {
+    try {
+      return await requestFn().timeout(_requestTimeout);
+    } on SocketException catch (e) {
+      throw NetworkException(
+        'Нет соединения с сетью при $action',
+        originalException: e,
+      );
+    } on TimeoutException catch (e) {
+      throw NetworkException(
+        'Таймаут запроса при $action',
+        originalException: e,
+      );
+    } on http.ClientException catch (e) {
+      throw NetworkException(
+        'Ошибка HTTP клиента при $action: ${e.message}',
+        originalException: e,
+      );
+    } catch (e) {
+      throw ApiException(
+        statusCode: -1,
+        message: 'Непредвиденная ошибка при $action: $e',
+        url: baseUrl,
+        details: e.toString(),
+      );
     }
   }
-  
-  // Не забываем закрыть клиент при необходимости
+
+  void _validateStatus(
+    http.Response response,
+    int expectedStatus, {
+    required String action,
+  }) {
+    if (response.statusCode != expectedStatus) {
+      final errorMessage = _extractErrorMessage(response);
+      throw ApiException(
+        statusCode: response.statusCode,
+        message:
+            'Ошибка сервера при $action: ${response.reasonPhrase ?? 'неверный ответ'}',
+        url: response.request?.url.toString() ?? baseUrl,
+        details: errorMessage,
+      );
+    }
+  }
+
+  T _decodeJson<T>(
+    String body,
+    T Function(dynamic json) parser, {
+    required String action,
+  }) {
+    try {
+      final decoded = jsonDecode(body);
+      return parser(decoded);
+    } on FormatException catch (_) {
+      throw JsonParsingException('Ошибка разбора JSON при $action', body);
+    }
+  }
+
+  String _extractErrorMessage(http.Response response) {
+    if (response.body.isEmpty) {
+      return 'Пустое тело ответа';
+    }
+
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded['message']?.toString() ??
+            decoded['error']?.toString() ??
+            response.body;
+      }
+    } catch (_) {
+      return response.body;
+    }
+
+    return response.body;
+  }
+
   void dispose() {
     _client.close();
   }
 }
 
-// Провайдер для ApiClient
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
 });

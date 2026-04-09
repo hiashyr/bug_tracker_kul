@@ -11,7 +11,7 @@ final _cyan = '\x1B[36m';
 class LoggingClient extends http.BaseClient {
   final http.Client _inner = http.Client();
   final Logger _logger = Logger();
-  
+
   final bool _debugMode = dotenv.getBool('DEBUG_MODE', fallback: false);
   static const int _maxBodyLength = 2000;
 
@@ -22,14 +22,24 @@ class LoggingClient extends http.BaseClient {
     if (request is http.Request) {
       bodyString = request.body;
     }
-    
+
     final stopwatch = Stopwatch()..start();
-    
+
     // Отправляем запрос
-    final response = await _inner.send(request);
-    
+    late final http.StreamedResponse response;
+    try {
+      response = await _inner.send(request);
+    } catch (e, stackTrace) {
+      if (_debugMode) {
+        _logger.e(
+          'HTTP request failed: ${request.method} ${request.url}\n$e\n$stackTrace',
+        );
+      }
+      rethrow;
+    }
+
     stopwatch.stop();
-    
+
     // Читаем тело ответа
     final responseBody = await response.stream.bytesToString();
 
@@ -42,14 +52,14 @@ class LoggingClient extends http.BaseClient {
 
     ${bodyString != null && bodyString.isNotEmpty ? '${_magenta}BODY:$_reset ${_truncateAndPrettyPrint(bodyString)}' : ''}
 
-    $_cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$_reset
+    $_cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$_reset
     
     ${_magenta}STATUS_OF_RESPONSE: $_reset${response.statusCode} $_reset(${stopwatch.elapsedMilliseconds}ms)
 
     ${responseBody.isNotEmpty ? '${_magenta}BODY_OF_RESPONSE: ${_truncateAndPrettyPrint(responseBody)}' : ''}
     ''');
     }
-    
+
     // Возвращаем новый StreamedResponse с тем же телом
     return http.StreamedResponse(
       Stream.value(utf8.encode(responseBody)),
@@ -62,25 +72,25 @@ class LoggingClient extends http.BaseClient {
       reasonPhrase: response.reasonPhrase,
     );
   }
-  
+
   String _truncateAndPrettyPrint(String jsonString) {
     final prettyString = _prettyPrintJson(jsonString);
-    
+
     if (prettyString.length > _maxBodyLength) {
       final truncated = prettyString.substring(0, _maxBodyLength);
       final totalSize = jsonString.length;
       return '$truncated\n... [truncated, total size: ${_formatSize(totalSize)}]';
     }
-    
+
     return prettyString;
   }
-  
+
   String _formatSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
   }
-  
+
   String _prettyPrintJson(String jsonString) {
     try {
       final decoded = jsonDecode(jsonString);
@@ -90,7 +100,7 @@ class LoggingClient extends http.BaseClient {
       return jsonString;
     }
   }
-  
+
   @override
   void close() {
     _inner.close();
