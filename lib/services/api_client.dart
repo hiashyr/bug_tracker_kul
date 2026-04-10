@@ -23,10 +23,17 @@ class ApiClient {
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   Map<String, String> get _headers => {
-    'Authorization': 'OAuth $_token',
+    'Authorization': 'Bearer $_token',
     'Content-Type': 'application/json',
     'Host': 'api.tracker.yandex.net',
     'X-Cloud-Org-Id': _orgId,
+  };
+
+  static const Map<String, List<String>> _transitionRequiredFields = {
+
+    // Пример, если бы у некоторых переходов были обязательные поля
+    // 'transition_to_review': ['reviewerComment', 'reviewReason'],
+    // 'transition_done': ['closedReason'],
   };
 
   Future<Issue> fetchIssue(String issueId) async {
@@ -60,6 +67,37 @@ class ApiClient {
           .map((item) => Status.fromJson(item as Map<String, dynamic>))
           .toList();
     }, action: 'fetchStatuses');
+  }
+
+  Future<Status> statusTransition(String issueId, String transitionId) async {
+    final payload = _buildTransitionPayload(transitionId);
+
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse(
+          '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
+        ),
+        headers: _headers,
+        body: jsonEncode(payload),
+      ),
+      action: 'переход в статус',
+    );
+
+    _validateStatus(response, 200, action: 'statusTransition');
+    return _decodeJson(
+      response.body,
+      (json) => Status.fromJson(json as Map<String, dynamic>),
+      action: 'statusTransition',
+    );
+  }
+
+  Map<String, dynamic> _buildTransitionPayload(String transitionId) {
+    final requiredFields = _transitionRequiredFields[transitionId];
+    if (requiredFields == null || requiredFields.isEmpty) {
+      return {};
+    }
+
+    return {for (final field in requiredFields) field: null};
   }
 
   Future<List<Comment>> fetchComments(String issueId) async {
