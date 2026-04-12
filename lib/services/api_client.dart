@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:trying_flutter/models/user.dart';
 
 import '../models/comment.dart';
 import '../models/issue.dart';
@@ -30,12 +31,66 @@ class ApiClient {
   };
 
   static const Map<String, List<String>> _transitionRequiredFields = {
-
     // Пример, если бы у некоторых переходов были обязательные поля
     // 'transition_to_review': ['reviewerComment', 'reviewReason'],
     // 'transition_done': ['closedReason'],
+    'testing': ['qaEngineer'], // Это поле принимает username из запроса. Сущность User
   };
 
+  // Запрос на получение пользователей
+  Future<List<User>> fetchUsers() async {
+    final response = await _sendRequest(
+      () => _client.get(Uri.parse('$baseUrl/users'), headers: _headers),
+      action: 'получение пользователей',
+    );
+
+    _validateStatus(response, 200, action: 'fetchUsers');
+    return _decodeJson(response.body, (json) {
+      final list = json as List<dynamic>;
+      return list
+          .map((item) => User.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }, action: 'fetchUsers');
+  }
+    // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
+    Future<void> statusTransition(
+      String issueId,
+      String transitionId, {
+      Map<String, dynamic> fieldValues = const {},
+    }) async {
+      final payload = _buildTransitionPayload(transitionId, fieldValues);
+
+      final response = await _sendRequest(
+        () => _client.post(
+          Uri.parse(
+            '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
+          ),
+          headers: _headers,
+          body: jsonEncode(payload),
+        ),
+        action: 'переход в статус',
+      );
+
+      _validateStatus(response, 200, action: 'statusTransition');
+      // Нам не нужно парсить Status, так как статус уже изменился
+      return;
+    }
+
+  Map<String, dynamic> _buildTransitionPayload(
+    String transitionId, [
+    Map<String, dynamic> fieldValues = const {},
+  ]) {
+    final requiredFields = _transitionRequiredFields[transitionId];
+    if (requiredFields == null || requiredFields.isEmpty) {
+      return {};
+    }
+
+    return {
+      for (final field in requiredFields) field: fieldValues[field],
+    };
+  }
+  
+  // Метод для получения одной задачи по ID
   Future<Issue> fetchIssue(String issueId) async {
     final response = await _sendRequest(
       () =>
@@ -51,6 +106,7 @@ class ApiClient {
     );
   }
 
+  // Метод для получения статусов, в которые задача может перейти
   Future<List<Status>> fetchStatuses(String issueId) async {
     final response = await _sendRequest(
       () => _client.get(
@@ -69,37 +125,7 @@ class ApiClient {
     }, action: 'fetchStatuses');
   }
 
-  Future<Status> statusTransition(String issueId, String transitionId) async {
-    final payload = _buildTransitionPayload(transitionId);
-
-    final response = await _sendRequest(
-      () => _client.post(
-        Uri.parse(
-          '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
-        ),
-        headers: _headers,
-        body: jsonEncode(payload),
-      ),
-      action: 'переход в статус',
-    );
-
-    _validateStatus(response, 200, action: 'statusTransition');
-    return _decodeJson(
-      response.body,
-      (json) => Status.fromJson(json as Map<String, dynamic>),
-      action: 'statusTransition',
-    );
-  }
-
-  Map<String, dynamic> _buildTransitionPayload(String transitionId) {
-    final requiredFields = _transitionRequiredFields[transitionId];
-    if (requiredFields == null || requiredFields.isEmpty) {
-      return {};
-    }
-
-    return {for (final field in requiredFields) field: null};
-  }
-
+  // Методя для получения комментариев задачи
   Future<List<Comment>> fetchComments(String issueId) async {
     final response = await _sendRequest(
       () => _client.get(
@@ -118,6 +144,7 @@ class ApiClient {
     }, action: 'fetchComments');
   }
 
+  // Метод для добавления комментария к задаче
   Future<Comment> addingComment(String issueId, String commentText) async {
     final response = await _sendRequest(
       () => _client.post(
@@ -136,6 +163,7 @@ class ApiClient {
     );
   }
 
+  // Метод для получения списка задач по статусу "Можно тестировать"
   Future<List<Issue>> showIssues() async {
     final response = await _sendRequest(
       () => _client.post(
@@ -158,6 +186,7 @@ class ApiClient {
     }, action: 'showIssues');
   }
 
+  // Универсальный метод для отправки HTTP-запросов с обработкой ошибок и логированием
   Future<http.Response> _sendRequest(
     Future<http.Response> Function() requestFn, {
     required String action,
@@ -189,6 +218,7 @@ class ApiClient {
     }
   }
 
+  // Валидация статуса ответа
   void _validateStatus(
     http.Response response,
     int expectedStatus, {
@@ -206,6 +236,7 @@ class ApiClient {
     }
   }
 
+  // Универсальный метод для декодирования JSON с обработкой ошибок
   T _decodeJson<T>(
     String body,
     T Function(dynamic json) parser, {
@@ -218,7 +249,7 @@ class ApiClient {
       throw JsonParsingException('Ошибка разбора JSON при $action', body);
     }
   }
-
+  // Метод для извлечения сообщения об ошибке из тела ответа
   String _extractErrorMessage(http.Response response) {
     if (response.body.isEmpty) {
       return 'Пустое тело ответа';

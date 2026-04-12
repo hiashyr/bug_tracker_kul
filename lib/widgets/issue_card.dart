@@ -1,14 +1,17 @@
+// lib/widgets/issue_card.dart
 import 'package:flutter/material.dart';
 import '../models/issue.dart';
 
 class IssueCard extends StatelessWidget {
   final Issue issue;
   final VoidCallback? onRefresh;
+  final VoidCallback? onTransitionToTesting;  // ← добавляем новый callback
 
   const IssueCard({
     super.key,
     required this.issue,
     this.onRefresh,
+    this.onTransitionToTesting,  // ← добавляем
   });
 
   @override
@@ -103,9 +106,27 @@ class IssueCard extends StatelessWidget {
               style: const TextStyle(color: Colors.grey),
             ),
 
-            // Кнопка обновления (опционально)
+            const SizedBox(height: 12),
+
+            // ✅ КНОПКА ПЕРЕВОДА НА ТЕСТИРОВАНИЕ (показываем только если статус не "testing")
+            if (issue.status.toLowerCase() != 'testing' &&
+                issue.status.toLowerCase() != 'на тестировании')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onTransitionToTesting,
+                  icon: const Icon(Icons.play_arrow, size: 18),
+                  label: const Text('Перевести на тестирование'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+
+            // Кнопка обновления
             if (onRefresh != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(

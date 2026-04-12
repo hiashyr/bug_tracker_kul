@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';  // ← добавляем для навигации
+import 'package:go_router/go_router.dart'; // ← добавляем для навигации
+import '../providers/error_helper.dart';
 import '../providers/issue_provider.dart';
 import '../models/issue.dart';
 
@@ -36,37 +37,30 @@ class IssuesListScreen extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              Icon(getErrorIcon(error), color: Colors.red, size: 48),
               const SizedBox(height: 16),
               Text(
-                'Ошибка загрузки',
+                getErrorMessage(error),
                 style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
+              if (canRetryError(error))
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(issuesProvider);
+                  },
+                  child: const Text('Повторить'),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(issuesProvider);
-                },
-                child: const Text('Повторить'),
-              ),
             ],
           ),
         ),
-        
+
         data: (issues) {
           if (issues.isEmpty) {
             return const Center(
@@ -83,7 +77,7 @@ class IssuesListScreen extends ConsumerWidget {
               ),
             );
           }
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: issues.length,
@@ -101,9 +95,7 @@ class IssuesListScreen extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           // ✅ ДОБАВЛЕНО: переход на детальную страницу
@@ -141,7 +133,7 @@ class IssuesListScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Название задачи
               Text(
                 issue.summary ?? 'Без названия',
@@ -153,7 +145,7 @@ class IssuesListScreen extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              
+
               // Нижняя строка: приоритет, автор, дата
               Row(
                 children: [
@@ -162,12 +154,19 @@ class IssuesListScreen extends ConsumerWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.person_outline,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             issue.createdBy,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -176,11 +175,18 @@ class IssuesListScreen extends ConsumerWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 12,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(issue.createdAt),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -204,7 +210,7 @@ class IssuesListScreen extends ConsumerWidget {
       default:
         color = Colors.grey;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -245,7 +251,7 @@ class IssuesListScreen extends ConsumerWidget {
       default:
         color = Colors.grey;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
