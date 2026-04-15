@@ -35,6 +35,7 @@ class ApiClient {
     // 'transition_to_review': ['reviewerComment', 'reviewReason'],
     // 'transition_done': ['closedReason'],
     'testing': ['qaEngineer'], // Это поле принимает username из запроса. Сущность User
+    'needInfo': ['pendingReplyFrom'] // Также принимает username из запроса.
   };
 
   // Запрос на получение пользователей
@@ -167,7 +168,7 @@ class ApiClient {
   Future<List<Issue>> showIssues() async {
     final response = await _sendRequest(
       () => _client.post(
-        Uri.parse('$baseUrl/issues/_search?expand=transitions'),
+        Uri.parse('https://iam.api.cloud.yandex.net/iam/v1/tokens'),
         headers: _headers,
         body: jsonEncode({
           'filter': {'queue': 'DEV', 'status': 'readyForTest'},
@@ -175,6 +176,28 @@ class ApiClient {
         }),
       ),
       action: 'получение списка задач',
+    );
+
+    _validateStatus(response, 200, action: 'showIssues');
+    return _decodeJson(response.body, (json) {
+      final list = json as List<dynamic>;
+      return list
+          .map((item) => Issue.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }, action: 'showIssues');
+  }
+
+  // Метод обмена JWT-token на IAM-token
+    Future<...> tradeJWTToIAM() async {
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse('https://iam.api.cloud.yandex.net/iam/v1/tokens'),
+        headers: _headers,
+        body: jsonEncode({
+          "jwt": "header.payload.signature" // TODO: Сделать сервис авторизации, где будет обмениваться JWT-токен и использовать этот запрос. Также подумать об регистрации клиентов с помощью создания сервисных аккаунтов и запроса их данных через GET-запросы(Идентификатор открытого ключа, идентификатор сервисного аккаунта)
+          }),
+      ),
+      action: 'обмен JWT-токена на IAM-токен',
     );
 
     _validateStatus(response, 200, action: 'showIssues');
