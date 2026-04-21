@@ -6,25 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:trying_flutter/models/user.dart';
+import 'package:trying_flutter/services/logging.dart';
 
 import '../models/comment.dart';
 import '../models/issue.dart';
 import '../models/status.dart';
 import '../services/api_exceptions.dart';
-import '../services/logging.dart';
+import '../services/yandex_auth.dart';
 
 class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
-  final String _token = dotenv.get('TOKEN');
+  final String? _staticToken = dotenv.get('TOKEN', fallback: '');
   final http.Client _client;
+  final String? _oauthToken;
 
-  ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
+  ApiClient({http.Client? client, String? oauthToken})
+      : _client = client ?? LoggingClient(),
+        _oauthToken = oauthToken;
 
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   Map<String, String> get _headers => {
-    'Authorization': 'OAuth $_token',
+    'Authorization': 'OAuth ${_oauthToken ?? _staticToken}',
     'Content-Type': 'application/json',
     'Host': 'api.tracker.yandex.net',
     'X-Cloud-Org-Id': _orgId,
@@ -292,5 +296,5 @@ class ApiClient {
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  return ApiClient(oauthToken: YandexAuthService.accessToken);
 });

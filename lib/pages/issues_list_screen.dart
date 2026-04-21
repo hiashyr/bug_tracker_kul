@@ -5,6 +5,7 @@ import 'package:trying_flutter/providers/user_provider.dart';
 import '../providers/error_helper.dart';
 import '../providers/issue_provider.dart';
 import '../models/issue.dart';
+import '../services/yandex_auth.dart';
 
 class IssuesListScreen extends ConsumerWidget {
   const IssuesListScreen({super.key});
@@ -12,7 +13,6 @@ class IssuesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final issuesAsync = ref.watch(issuesProvider);
-    final testAuth = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,6 +20,30 @@ class IssuesListScreen extends ConsumerWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
+          if (YandexAuthService.user == null)
+            IconButton(
+              icon: const Icon(Icons.login),
+              tooltip: 'Войти через Яндекс',
+              onPressed: () async {
+                try {
+                  await YandexAuthService.loginWithYandex();
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Ошибка авторизации: $e')),
+                  );
+                }
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Выйти',
+              onPressed: () async {
+                await YandexAuthService.logout();
+                ref.invalidate(issuesProvider);
+                ref.invalidate(currentUserProvider);
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {

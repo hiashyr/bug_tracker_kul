@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
+import '../services/yandex_auth.dart';
 
 final usersProvider = FutureProvider<List<User>>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -8,6 +9,9 @@ final usersProvider = FutureProvider<List<User>>((ref) {
 });
 
 final currentUserProvider = FutureProvider<User>((ref) {
+  if (YandexAuthService.user != null) {
+    return Future.value(User.fromJson(YandexAuthService.user!));
+  }
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchCurrentUser();
 });

@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Не забудьте импорт
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:trying_flutter/routes/app_router.dart';
+import 'package:trying_flutter/services/yandex_auth.dart';
+import 'dart:html' as html;
 
 Future<void> main() async {
-  // Обязательная строка перед любым асинхронным вызовом в main
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: '.env');
+
+  // Инициализировать Yandex Auth
+  await YandexAuthService.init();
+
+  // Обработка OAuth callback
+  final hash = html.window.location.hash;
+  if (hash.isNotEmpty && hash.contains('access_token')) {
+    try {
+      await YandexAuthService.handleAuthCallback(hash);
+      // Очистить hash из URL для чистоты
+      html.window.history.replaceState(null, '', html.window.location.pathname);
+    } catch (e) {
+      print('Ошибка обработки авторизации: $e');
+    }
+  }
 
   runApp(
     const ProviderScope(
