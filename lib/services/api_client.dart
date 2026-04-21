@@ -53,6 +53,22 @@ class ApiClient {
           .toList();
     }, action: 'fetchUsers');
   }
+
+  // Запрос на получение конкретного пользователя
+  Future<User> fetchCurrentUser() async {
+    final response = await _sendRequest(
+      () => _client.get(Uri.parse('$baseUrl/myself'), headers: _headers),
+      action: 'получение текущего пользователя',
+    );
+
+    _validateStatus(response, 200, action: 'fetchUsers');
+    return _decodeJson(
+      response.body,
+      (json) => User.fromJson(json as Map<String, dynamic>),
+      action: 'получение конкретного пользователя',
+    );
+  }
+  
     // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
     Future<void> statusTransition(
       String issueId,

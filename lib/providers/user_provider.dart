@@ -7,6 +7,11 @@ final usersProvider = FutureProvider<List<User>>((ref) {
   return apiClient.fetchUsers();
 });
 
+final currentUserProvider = FutureProvider<User>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return apiClient.fetchCurrentUser();
+});
+
 // Провайдер-фильтр для отшивания ботов по полю cloudUid
 final validUsersProvider = FutureProvider<List<User>>((ref) {
   final usersAsync = ref.watch(usersProvider);

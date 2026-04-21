@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // ← добавляем для навигации
+import 'package:trying_flutter/providers/user_provider.dart';
 import '../providers/error_helper.dart';
 import '../providers/issue_provider.dart';
 import '../models/issue.dart';
@@ -11,6 +12,7 @@ class IssuesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final issuesAsync = ref.watch(issuesProvider);
+    final testAuth = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
