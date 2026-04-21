@@ -3,10 +3,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 
-final _reset = '\x1B[0m';
-final _yellow = '\x1B[33m';
-final _magenta = '\x1B[35m';
-final _cyan = '\x1B[36m';
+final reset = '\x1B[0m';
+final yellow = '\x1B[33m';
+final magenta = '\x1B[35m';
+final cyan = '\x1B[36m';
+final green = '\e[0;32m';
 
 class LoggingClient extends http.BaseClient {
   final http.Client _inner = http.Client();
@@ -46,17 +47,17 @@ class LoggingClient extends http.BaseClient {
     // Логируем только если DEBUG_MODE = true
     if (_debugMode) {
       _logger.i('''
-    ${request.method} $_yellow${request.url}
+    ${request.method} $yellow${request.url}
 
-    ${_magenta}HEADERS:$_reset ${request.headers}
+    ${magenta}HEADERS:$reset ${request.headers}
 
-    ${bodyString != null && bodyString.isNotEmpty ? '${_magenta}BODY:$_reset ${_truncateAndPrettyPrint(bodyString)}' : ''}
+    ${bodyString != null && bodyString.isNotEmpty ? '${magenta}BODY:$reset ${_truncateAndPrettyPrint(bodyString)}' : ''}
 
-    $_cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$_reset
+    $cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$reset
     
-    ${_magenta}STATUS_OF_RESPONSE: $_reset${response.statusCode} $_reset(${stopwatch.elapsedMilliseconds}ms)
+    ${magenta}STATUS_OF_RESPONSE: $reset${response.statusCode} $reset(${stopwatch.elapsedMilliseconds}ms)
 
-    ${responseBody.isNotEmpty ? '${_magenta}BODY_OF_RESPONSE: ${_truncateAndPrettyPrint(responseBody)}' : ''}
+    ${responseBody.isNotEmpty ? '${magenta}BODY_OF_RESPONSE: ${_truncateAndPrettyPrint(responseBody)}' : ''}
     ''');
     }
 

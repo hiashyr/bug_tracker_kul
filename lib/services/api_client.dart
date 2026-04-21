@@ -5,7 +5,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:trying_flutter/models/iam_token.dart';
 import 'package:trying_flutter/models/user.dart';
+import 'package:trying_flutter/providers/auth_provider.dart';
 
 import '../models/comment.dart';
 import '../models/issue.dart';
@@ -15,8 +17,10 @@ import '../services/logging.dart';
 
 class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
+
   final String _orgId = dotenv.get('ORG_ID');
   final String _token = dotenv.get('TOKEN');
+
   final http.Client _client;
 
   ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
@@ -34,8 +38,10 @@ class ApiClient {
     // Пример, если бы у некоторых переходов были обязательные поля
     // 'transition_to_review': ['reviewerComment', 'reviewReason'],
     // 'transition_done': ['closedReason'],
-    'testing': ['qaEngineer'], // Это поле принимает username из запроса. Сущность User
-    'needInfo': ['pendingReplyFrom'] // Также принимает username из запроса.
+    'testing': [
+      'qaEngineer',
+    ], // Это поле принимает username из запроса. Сущность User
+    'needInfo': ['pendingReplyFrom'], // Также принимает username из запроса.
   };
 
   // Запрос на получение пользователей
@@ -53,29 +59,30 @@ class ApiClient {
           .toList();
     }, action: 'fetchUsers');
   }
-    // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
-    Future<void> statusTransition(
-      String issueId,
-      String transitionId, {
-      Map<String, dynamic> fieldValues = const {},
-    }) async {
-      final payload = _buildTransitionPayload(transitionId, fieldValues);
 
-      final response = await _sendRequest(
-        () => _client.post(
-          Uri.parse(
-            '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
-          ),
-          headers: _headers,
-          body: jsonEncode(payload),
+  // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
+  Future<void> statusTransition(
+    String issueId,
+    String transitionId, {
+    Map<String, dynamic> fieldValues = const {},
+  }) async {
+    final payload = _buildTransitionPayload(transitionId, fieldValues);
+
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse(
+          '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
         ),
-        action: 'переход в статус',
-      );
+        headers: _headers,
+        body: jsonEncode(payload),
+      ),
+      action: 'переход в статус',
+    );
 
-      _validateStatus(response, 200, action: 'statusTransition');
-      // Нам не нужно парсить Status, так как статус уже изменился
-      return;
-    }
+    _validateStatus(response, 200, action: 'statusTransition');
+    // Нам не нужно парсить Status, так как статус уже изменился
+    return;
+  }
 
   Map<String, dynamic> _buildTransitionPayload(
     String transitionId, [
@@ -86,11 +93,9 @@ class ApiClient {
       return {};
     }
 
-    return {
-      for (final field in requiredFields) field: fieldValues[field],
-    };
+    return {for (final field in requiredFields) field: fieldValues[field]};
   }
-  
+
   // Метод для получения одной задачи по ID
   Future<Issue> fetchIssue(String issueId) async {
     final response = await _sendRequest(
@@ -168,7 +173,7 @@ class ApiClient {
   Future<List<Issue>> showIssues() async {
     final response = await _sendRequest(
       () => _client.post(
-        Uri.parse('https://iam.api.cloud.yandex.net/iam/v1/tokens'),
+        Uri.parse('$baseUrl/issues/_search?expand=transitions'),
         headers: _headers,
         body: jsonEncode({
           'filter': {'queue': 'DEV', 'status': 'readyForTest'},
@@ -187,26 +192,26 @@ class ApiClient {
     }, action: 'showIssues');
   }
 
-  // Метод обмена JWT-token на IAM-token
-    Future<...> tradeJWTToIAM() async {
+  // Метод для обмена сгенерированного JWT токена на IAM-токен
+  Future<IamToken> exchangeJwtForIamToken(String jwtToken) async {
     final response = await _sendRequest(
       () => _client.post(
         Uri.parse('https://iam.api.cloud.yandex.net/iam/v1/tokens'),
-        headers: _headers,
-        body: jsonEncode({
-          "jwt": "header.payload.signature" // TODO: Сделать сервис авторизации, где будет обмениваться JWT-токен и использовать этот запрос. Также подумать об регистрации клиентов с помощью создания сервисных аккаунтов и запроса их данных через GET-запросы(Идентификатор открытого ключа, идентификатор сервисного аккаунта)
-          }),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'jwt': jwtToken}),
       ),
-      action: 'обмен JWT-токена на IAM-токен',
+      action: 'обмен JWT на IAM-токен',
     );
 
-    _validateStatus(response, 200, action: 'showIssues');
+    _validateStatus(response, 200, action: 'exchangeJwtForIamToken');
     return _decodeJson(response.body, (json) {
-      final list = json as List<dynamic>;
-      return list
-          .map((item) => Issue.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }, action: 'showIssues');
+      final data = json as Map<String, dynamic>;
+      final tokenString = data['iamToken'] as String;
+      final expiresAtString = data['expiresAt'] as String;
+      final expiresAt = DateTime.parse(expiresAtString);
+
+      return IamToken(token: tokenString, expiresAt: expiresAt);
+    }, action: 'exchangeJwtForIamToken');
   }
 
   // Универсальный метод для отправки HTTP-запросов с обработкой ошибок и логированием
@@ -272,6 +277,7 @@ class ApiClient {
       throw JsonParsingException('Ошибка разбора JSON при $action', body);
     }
   }
+
   // Метод для извлечения сообщения об ошибке из тела ответа
   String _extractErrorMessage(http.Response response) {
     if (response.body.isEmpty) {
