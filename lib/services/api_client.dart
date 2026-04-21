@@ -17,22 +17,28 @@ import '../services/logging.dart';
 
 class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
-
   final String _orgId = dotenv.get('ORG_ID');
-  final String _token = dotenv.get('TOKEN');
+  final String? _authorizationHeader; // токен из провайдера
+  final String _fallbackToken = dotenv.get('TOKEN'); // Если токена нет, берем как раньше из .env
 
   final http.Client _client;
 
-  ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
-
-  static const Duration _requestTimeout = Duration(seconds: 15);
+  // Конструктор с новым токеном, который идет в заголовок
+  ApiClient({
+    http.Client? client,
+    String? authorizationHeader,
+  })  : _client = client ?? LoggingClient(),
+        _authorizationHeader = authorizationHeader;
 
   Map<String, String> get _headers => {
-    'Authorization': 'Bearer $_token',
+    // Либо новый IAM либо старый хардкод
+    'Authorization': _authorizationHeader ?? 'Bearer $_fallbackToken',
     'Content-Type': 'application/json',
     'Host': 'api.tracker.yandex.net',
     'X-Cloud-Org-Id': _orgId,
   };
+
+  static const Duration _requestTimeout = Duration(seconds: 15);
 
   static const Map<String, List<String>> _transitionRequiredFields = {
     // Пример, если бы у некоторых переходов были обязательные поля
