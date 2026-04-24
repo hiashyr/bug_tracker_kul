@@ -1,13 +1,16 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:html' as html;
 
 class YandexAuthService {
-  static const String clientId = 'a74eee4c0faa43578ed9f16f39016fe8';
-  static const String redirectUri = 'https://oauth.yandex.ru/verification_code'; // Для локальной разработки; замените на ваш домен в продакшене
+  static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
+  static const String redirectUri = 'http://localhost:62044/auth/callback'; // Пока что тут использется локалхост и надо проверять чтобы совпадало со значением в яндексе
   static const String scopes = 'tracker:read tracker:write';
+
+  static String _orgId = dotenv.get('ORG_ID');
 
   static final Logger _logger = Logger();
 
@@ -17,7 +20,7 @@ class YandexAuthService {
 
     if (await canLaunchUrl(Uri.parse(authUrl))) {
       _logger.i('Открываем URL авторизации: $authUrl');
-      await launchUrl(Uri.parse(authUrl), mode: LaunchMode.externalApplication);
+      await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self',);
       _logger.i('URL авторизации открыт успешно');
     } else {
       _logger.e('Не удалось открыть URL авторизации');
@@ -67,7 +70,10 @@ class YandexAuthService {
     _logger.i('Запрашиваем данные текущего пользователя');
     final response = await http.get(
       Uri.parse('https://api.tracker.yandex.net/v2/myself'),
-      headers: {'Authorization': 'OAuth $_accessToken'},
+      headers: {
+        'Authorization': 'OAuth $_accessToken',
+        'Host': 'api.tracker.yandex.net',
+        'X-Cloud-Org-Id': _orgId,},
     );
 
     if (response.statusCode == 200) {

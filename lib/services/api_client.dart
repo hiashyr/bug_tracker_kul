@@ -17,7 +17,6 @@ import '../services/yandex_auth.dart';
 class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
-  final String? _staticToken = dotenv.get('TOKEN', fallback: '');
   final http.Client _client;
   final String? _oauthToken;
 
@@ -28,7 +27,7 @@ class ApiClient {
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   Map<String, String> get _headers => {
-    'Authorization': 'OAuth ${_oauthToken ?? _staticToken}',
+    'Authorization': 'OAuth $_oauthToken',
     'Content-Type': 'application/json',
     'Host': 'api.tracker.yandex.net',
     'X-Cloud-Org-Id': _orgId,
