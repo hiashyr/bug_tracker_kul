@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+import 'package:web/web.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/services/yandex_auth.dart';
@@ -18,7 +18,7 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
   }
 
   Future<void> _handle() async {
-    final hash = html.window.location.hash;
+    final hash = window.location.hash;
     await YandexAuthService.handleAuthCallback(hash);
 
     if (!mounted) return;

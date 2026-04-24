@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:html' as html;
+import 'package:web/web.dart';
 
 class YandexAuthService {
   static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
@@ -85,13 +85,13 @@ class YandexAuthService {
     }
   }
 
-  static Future<void> logout() async {
-    _logger.i('Выход из аккаунта');
-    _accessToken = null;
-    _user = null;
-    html.window.localStorage.remove('yandex_access_token');
-    _logger.i('Токен удален из хранилища');
-  }
+static Future<void> logout() async {
+  _logger.i('Выход из аккаунта');
+  _accessToken = null;
+  _user = null;
+  window.localStorage.removeItem('yandex_access_token');
+  _logger.i('Токен удален из хранилища');
+}
 
   static String? _accessToken;
   static Map<String, dynamic>? _user;
@@ -111,11 +111,11 @@ class YandexAuthService {
     return params;
   }
 
-  static Future<void> _saveTokenToStorage(String token) async {
-    html.window.localStorage['yandex_access_token'] = token;
-  }
+static Future<void> _saveTokenToStorage(String token) async {
+  window.localStorage.setItem('yandex_access_token', token);
+}
 
-  static Future<String?> loadTokenFromStorage() async {
-    return html.window.localStorage['yandex_access_token'];
-  }
+static Future<String?> loadTokenFromStorage() async {
+  return window.localStorage.getItem('yandex_access_token');
+}
 }
