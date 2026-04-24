@@ -1,31 +1,25 @@
-import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trying_flutter/routes/app_router.dart';
 import 'package:trying_flutter/services/yandex_auth.dart';
+import 'package:web/web.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await dotenv.load(fileName: '.env');
-
-  // ⭐ ВАЖНО: Обработать callback ДО инициализации GoRouter
-  final hash = html.window.location.hash;
-  if (hash.isNotEmpty && hash.contains('access_token')) {
+  
+  // Проверяем, есть ли хеш с access_token (OAuth callback)
+  final hash = window.location.hash;
+  if (hash.contains('access_token')) {
     try {
       await YandexAuthService.handleAuthCallback(hash);
-      // ⭐ Очистить hash из URL для чистоты
-      html.window.history.replaceState(null, '', '/');
+      // Очищаем хеш из URL после обработки
+      window.history.replaceState(null, '', window.location.pathname);
     } catch (e) {
-      print('Ошибка обработки авторизации: $e');
-      // Очистить hash даже при ошибке
-      html.window.history.replaceState(null, '', '/');
+      print('Ошибка обработки OAuth callback: $e');
     }
-  }
-
-  // Инициализировать YandexAuthService только если нет callback
-  if (!hash.contains('access_token')) {
+  } else {
     await YandexAuthService.init();
   }
 
