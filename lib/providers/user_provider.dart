@@ -10,7 +10,7 @@ final usersProvider = FutureProvider<List<User>>((ref) {
 
 final currentUserProvider = FutureProvider<User>((ref) {
   if (YandexAuthService.user != null) {
-    return Future.value(User.fromJson(YandexAuthService.user!));
+    return Future.value(YandexAuthService.user!);
   }
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchCurrentUser();

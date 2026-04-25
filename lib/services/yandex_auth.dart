@@ -1,16 +1,13 @@
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:trying_flutter/models/user.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart';
+import 'api_client.dart';
 
 class YandexAuthService {
   static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
-  static const String redirectUri = 'http://localhost:62044/auth/callback'; // Пока что тут использется локалхост и надо проверять чтобы совпадало со значением в яндексе
+  static const String redirectUri = 'http://localhost:62044/auth/callback';
   static const String scopes = 'tracker:read tracker:write';
-
-  static String _orgId = dotenv.get('ORG_ID');
 
   static final Logger _logger = Logger();
 
@@ -20,7 +17,7 @@ class YandexAuthService {
 
     if (await canLaunchUrl(Uri.parse(authUrl))) {
       _logger.i('Открываем URL авторизации: $authUrl');
-      await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self',);
+      await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self');
       _logger.i('URL авторизации открыт успешно');
     } else {
       _logger.e('Не удалось открыть URL авторизации');
@@ -35,8 +32,11 @@ class YandexAuthService {
       _accessToken = params['access_token'];
       _logger.i('Токен получен и сохранен');
       await _saveTokenToStorage(_accessToken!);
-      _user = await fetchCurrentUser();
-      _logger.i('Пользователь получен: ${_user?['display']}');
+      
+      // Используем ApiClient
+      final apiClient = ApiClient(oauthToken: _accessToken);
+      _user = await apiClient.fetchCurrentUser();
+      _logger.i('Пользователь получен: ${_user?.display}');
     } else {
       _logger.e('Токен не найден в hash');
       throw 'Токен не найден в URL';
@@ -49,8 +49,10 @@ class YandexAuthService {
     if (_accessToken != null) {
       _logger.i('Токен загружен из хранилища');
       try {
-        _user = await fetchCurrentUser();
-        _logger.i('Пользователь восстановлен: ${_user?['display']}');
+        // Используем ApiClient метод
+        final apiClient = ApiClient(oauthToken: _accessToken);
+        _user = await apiClient.fetchCurrentUser();
+        _logger.i('Пользователь восстановлен: ${_user?.display}');
       } catch (e) {
         _logger.e('Ошибка восстановления пользователя: $e');
         _accessToken = null;
@@ -61,43 +63,19 @@ class YandexAuthService {
     }
   }
 
-  static Future<Map<String, dynamic>> fetchCurrentUser() async {
-    if (_accessToken == null) {
-      _logger.e('Токен отсутствует для запроса пользователя');
-      throw 'Токен не найден';
-    }
-
-    _logger.i('Запрашиваем данные текущего пользователя');
-    final response = await http.get(
-      Uri.parse('https://api.tracker.yandex.net/v2/myself'),
-      headers: {
-        'Authorization': 'OAuth $_accessToken',
-        'Host': 'api.tracker.yandex.net',
-        'X-Cloud-Org-Id': _orgId,},
-    );
-
-    if (response.statusCode == 200) {
-      _logger.i('Данные пользователя получены успешно');
-      return json.decode(response.body);
-    } else {
-      _logger.e('Ошибка получения пользователя: ${response.statusCode} - ${response.body}');
-      throw 'Ошибка получения пользователя: ${response.statusCode}';
-    }
+  static Future<void> logout() async {
+    _logger.i('Выход из аккаунта');
+    _accessToken = null;
+    _user = null;
+    window.localStorage.removeItem('yandex_access_token');
+    _logger.i('Токен удален из хранилища');
   }
 
-static Future<void> logout() async {
-  _logger.i('Выход из аккаунта');
-  _accessToken = null;
-  _user = null;
-  window.localStorage.removeItem('yandex_access_token');
-  _logger.i('Токен удален из хранилища');
-}
-
   static String? _accessToken;
-  static Map<String, dynamic>? _user;
+  static User? _user;
 
   static String? get accessToken => _accessToken;
-  static Map<String, dynamic>? get user => _user;
+  static User? get user => _user;
 
   static Map<String, String> _parseHash(String hash) {
     final params = <String, String>{};
@@ -111,11 +89,11 @@ static Future<void> logout() async {
     return params;
   }
 
-static Future<void> _saveTokenToStorage(String token) async {
-  window.localStorage.setItem('yandex_access_token', token);
-}
+  static Future<void> _saveTokenToStorage(String token) async {
+    window.localStorage.setItem('yandex_access_token', token);
+  }
 
-static Future<String?> loadTokenFromStorage() async {
-  return window.localStorage.getItem('yandex_access_token');
-}
+  static Future<String?> loadTokenFromStorage() async {
+    return window.localStorage.getItem('yandex_access_token');
+  }
 }
