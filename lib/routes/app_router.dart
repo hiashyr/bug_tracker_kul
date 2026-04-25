@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trying_flutter/pages/authCallbackScreen.dart';
 import 'package:trying_flutter/pages/issue_screen.dart';
 import 'package:trying_flutter/pages/issues_list_screen.dart';
 
@@ -20,11 +19,6 @@ final appRouter = GoRouter(
         final issueId = state.pathParameters['issueId']!;
         return IssueScreen(issueId: issueId);
       },
-    ),
-    GoRoute(
-      path: '/auth/callback',
-      name: 'auth-callback',
-      builder: (context, state) => const AuthCallbackScreen(),
     ),
   ],
   // Обработка ошибок навигации
