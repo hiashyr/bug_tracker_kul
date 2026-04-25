@@ -16,7 +16,6 @@ class YandexAuthService {
     final authUrl = 'https://oauth.yandex.ru/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri&scope=$scopes';
 
     if (await canLaunchUrl(Uri.parse(authUrl))) {
-      _logger.i('Открываем URL авторизации: $authUrl');
       await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self');
       _logger.i('URL авторизации открыт успешно');
     } else {
@@ -34,7 +33,7 @@ class YandexAuthService {
       await _saveTokenToStorage(_accessToken!);
       
       // Используем ApiClient
-      final apiClient = ApiClient(oauthToken: _accessToken);
+      final apiClient = ApiClient();
       _user = await apiClient.fetchCurrentUser();
       _logger.i('Пользователь получен: ${_user?.display}');
     } else {
@@ -50,7 +49,7 @@ class YandexAuthService {
       _logger.i('Токен загружен из хранилища');
       try {
         // Используем ApiClient метод
-        final apiClient = ApiClient(oauthToken: _accessToken);
+        final apiClient = ApiClient();
         _user = await apiClient.fetchCurrentUser();
         _logger.i('Пользователь восстановлен: ${_user?.display}');
       } catch (e) {

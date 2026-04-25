@@ -18,16 +18,14 @@ class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
   final http.Client _client;
-  final String? _oauthToken;
 
-  ApiClient({http.Client? client, String? oauthToken})
-      : _client = client ?? LoggingClient(),
-        _oauthToken = oauthToken;
+  ApiClient({http.Client? client})
+      : _client = client ?? LoggingClient();
 
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   Map<String, String> get _headers => {
-    'Authorization': 'OAuth $_oauthToken',
+    'Authorization': 'OAuth ${YandexAuthService.accessToken}',
     'Content-Type': 'application/json',
     'Host': 'api.tracker.yandex.net',
     'X-Cloud-Org-Id': _orgId,
@@ -211,6 +209,16 @@ class ApiClient {
     Future<http.Response> Function() requestFn, {
     required String action,
   }) async {
+    // Проверка наличия токена ДО отправки запроса
+    if (YandexAuthService.accessToken == null || YandexAuthService.accessToken!.isEmpty) {
+      throw ApiException(
+        statusCode: 401,
+        message: 'Авторизация требуется. Токен не найден при $action',
+        url: baseUrl,
+        details: 'Отсутствует токен доступа',
+      );
+    }
+
     try {
       return await requestFn().timeout(_requestTimeout);
     } on SocketException catch (e) {
@@ -295,5 +303,5 @@ class ApiClient {
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient(oauthToken: YandexAuthService.accessToken);
+  return ApiClient();
 });
