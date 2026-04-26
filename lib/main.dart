@@ -15,7 +15,7 @@ Future<void> main() async {
     try {
       await YandexAuthService.handleAuthCallback(hash);
       // Очищаем хеш из URL после обработки
-      window.history.replaceState(null, '', window.location.pathname);
+      window.location.href = '/';
     } catch (e) {
       print('Ошибка обработки OAuth callback: $e');
     }
