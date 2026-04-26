@@ -1,13 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/issue.dart';
 import '../services/api_client.dart';
+import 'auth_provider.dart';
 
-final issueProvider = FutureProvider.family<Issue, String>((ref, issueId) {
+final issueProvider = FutureProvider.family<Issue, String>((ref, issueId) async {
+  final user = await ref.watch(authStateProvider.future);
+  if (user == null) {
+    throw Exception('Пользователь не авторизован');
+  }
+
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchIssue(issueId);
 });
 
-final issuesProvider = FutureProvider<List<Issue>>((ref) {
+final issuesProvider = FutureProvider<List<Issue>>((ref) async {
+  final user = await ref.watch(authStateProvider.future);
+  if (user == null) return [];
+
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.showIssues();
 });
