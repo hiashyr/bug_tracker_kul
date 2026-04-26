@@ -1,4 +1,3 @@
-// lib/widgets/issue_card.dart
 import 'package:flutter/material.dart';
 import '../models/issue.dart';
 import '../models/status.dart';
@@ -7,8 +6,8 @@ class IssueCard extends StatelessWidget {
   final Issue issue;
   final VoidCallback? onRefresh;
   final VoidCallback? onTransitionToTesting;
-  final List<Status>? availableStatuses;  // ← добавляем список доступных статусов
-  final Function(Status)? onStatusSelected;  // ← колбэк при выборе статуса
+  final List<Status>? availableStatuses;
+  final ValueChanged<Status>? onStatusSelected;
 
   const IssueCard({
     super.key,
@@ -24,173 +23,77 @@ class IssueCard extends StatelessWidget {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ID и статус (статус теперь кликабельный)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  issue.self,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                
-                // ✅ КЛИКАБЕЛЬНЫЙ СТАТУС
-                _buildStatusChip(context),
-              ],
+            IssueHeader(
+              issue: issue,
+              availableStatuses: availableStatuses,
+              onStatusSelected: onStatusSelected,
             ),
             const SizedBox(height: 16),
-
-            // Приоритет
-            const Text(
-              'Приоритет:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            Text(issue.priority),
+            IssueDetails(issue: issue),
             const SizedBox(height: 12),
-
-            // Название задачи
-            const Text(
-              'Название:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+            IssueActions(
+              issue: issue,
+              onTransitionToTesting: onTransitionToTesting,
+              onRefresh: onRefresh,
             ),
-            Text(
-              issue.summary ?? "Нет названия",
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            // Описание (если есть)
-            if (issue.description != null) ...[
-              const Text(
-                'Описание:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                issue.description!,
-                style: const TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Автор и дата создания
-            const Divider(),
-            const SizedBox(height: 8),
-            Text(
-              'Создал: ${issue.createdBy}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-            Text(
-              'Дата: ${_formatDate(issue.createdAt)}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Кнопка перевода на тестирование (оставляем для быстрого доступа)
-            if (issue.status.toLowerCase() != 'testing' &&
-                issue.status.toLowerCase() != 'на тестировании')
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onTransitionToTesting,
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  label: const Text('Перевести на тестирование'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-
-            // Кнопка обновления
-            if (onRefresh != null) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: onRefresh,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Обновить'),
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
+}
 
-  // Виджет кликабельного статуса
-  Widget _buildStatusChip(BuildContext context) {
-    final hasTransitions = availableStatuses != null && availableStatuses!.isNotEmpty;
-    
-    return GestureDetector(
-      onTap: hasTransitions ? () => _showStatusMenu(context) : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
+class IssueHeader extends StatelessWidget {
+  final Issue issue;
+  final List<Status>? availableStatuses;
+  final ValueChanged<Status>? onStatusSelected;
+
+  const IssueHeader({
+    super.key,
+    required this.issue,
+    this.availableStatuses,
+    this.onStatusSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasTransitions =
+        availableStatuses != null && availableStatuses!.isNotEmpty;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          issue.id,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        decoration: BoxDecoration(
+        _StatusChip(
+          status: issue.status,
+          hasTransitions: hasTransitions,
+          onTap: hasTransitions ? () => _showStatusMenu(context) : null,
           color: _getStatusColor(issue.status),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: hasTransitions
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              issue.status,
-              style: const TextStyle(color: Colors.white),
-            ),
-            if (hasTransitions) ...[
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.arrow_drop_down,
-                size: 18,
-                color: Colors.white,
-              ),
-            ],
-          ],
-        ),
-      ),
+      ],
     );
   }
 
-  // Показываем меню выбора статуса
   void _showStatusMenu(BuildContext context) {
-    if (availableStatuses == null || availableStatuses!.isEmpty) return;
-    
+    final statuses = availableStatuses;
+    if (statuses == null || statuses.isEmpty) return;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,14 +102,11 @@ class IssueCard extends StatelessWidget {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Изменить статус',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               const Divider(height: 1),
-              ...availableStatuses!.map((status) {
+              ...statuses.map((status) {
                 return ListTile(
                   leading: Icon(
                     _getStatusIcon(status.display),
@@ -214,7 +114,7 @@ class IssueCard extends StatelessWidget {
                   ),
                   title: Text(status.display),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     onStatusSelected?.call(status);
                   },
                 );
@@ -264,8 +164,178 @@ class IssueCard extends StatelessWidget {
         return Icons.timeline;
     }
   }
+}
+
+class IssueDetails extends StatelessWidget {
+  final Issue issue;
+
+  const IssueDetails({super.key, required this.issue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _LabelText('Приоритет:'),
+        Text(issue.priority),
+        const SizedBox(height: 12),
+        const _LabelText('Название:'),
+        Text(
+          issue.summary ?? 'Нет названия',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        if (issue.description != null) ...[
+          const _LabelText('Описание:'),
+          Text(
+            issue.description!,
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+        ],
+        const Divider(),
+        const SizedBox(height: 8),
+        Text(
+          'Создал: ${issue.createdBy}',
+          style: const TextStyle(color: Colors.grey),
+        ),
+        Text(
+          'Дата: ${_formatDate(issue.createdAt)}',
+          style: const TextStyle(color: Colors.grey),
+        ),
+      ],
+    );
+  }
 
   String _formatDate(DateTime date) {
-    return '${date.day}.${date.month}.${date.year} ${date.hour}:${date.minute}';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
+  }
+}
+
+class _LabelText extends StatelessWidget {
+  final String text;
+
+  const _LabelText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+      ),
+    );
+  }
+}
+
+class IssueActions extends StatelessWidget {
+  final Issue issue;
+  final VoidCallback? onTransitionToTesting;
+  final VoidCallback? onRefresh;
+
+  const IssueActions({
+    super.key,
+    required this.issue,
+    this.onTransitionToTesting,
+    this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isTesting = issue.status.toLowerCase() == 'testing' ||
+        issue.status.toLowerCase() == 'на тестировании';
+
+    return Column(
+      children: [
+        if (!isTesting && onTransitionToTesting != null)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onTransitionToTesting,
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: const Text('Перевести на тестирование'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        if (onRefresh != null) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Обновить'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  final bool hasTransitions;
+  final VoidCallback? onTap;
+  final Color color;
+
+  const _StatusChip({
+    required this.status,
+    required this.hasTransitions,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: hasTransitions
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            status,
+            style: const TextStyle(color: Colors.white),
+          ),
+          if (hasTransitions) ...[
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 18,
+              color: Colors.white,
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (onTap == null) return chip;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: chip,
+    );
   }
 }

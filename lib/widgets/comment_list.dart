@@ -19,12 +19,11 @@ class CommentList extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Комментарии:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Text(
+              'Комментарии',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             if (onRefresh != null)
               TextButton.icon(
@@ -37,47 +36,80 @@ class CommentList extends StatelessWidget {
         const SizedBox(height: 8),
         Expanded(
           child: comments.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Комментариев пока нет',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                )
-              : ListView.builder(
+              ? const _EmptyCommentsState()
+              : ListView.separated(
                   itemCount: comments.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    return _buildCommentCard(comments[index]);
+                    return _CommentCard(comment: comments[index]);
                   },
                 ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildCommentCard(Comment comment) {
+class _EmptyCommentsState extends StatelessWidget {
+  const _EmptyCommentsState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 56,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Комментариев пока нет',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommentCard extends StatelessWidget {
+  final Comment comment;
+
+  const _CommentCard({required this.comment});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 2,
+      elevation: 1.5,
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(
-                  comment.createdBy,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                Expanded(
+                  child: Text(
+                    comment.createdBy,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   _formatDate(comment.createdAt),
-                  style: const TextStyle(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.grey,
-                    fontSize: 12,
                   ),
                 ),
               ],
@@ -85,17 +117,15 @@ class CommentList extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               comment.text,
-              style: const TextStyle(fontSize: 14),
+              style: theme.textTheme.bodyMedium,
             ),
-            // Если есть дата обновления и она отличается от даты создания
-            if (comment.updatedAt != null && 
+            if (comment.updatedAt != null &&
                 comment.updatedAt != comment.createdAt) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 'Изменён: ${_formatDate(comment.updatedAt!)}',
-                style: const TextStyle(
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: Colors.grey,
-                  fontSize: 10,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -107,6 +137,11 @@ class CommentList extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}.${date.month}.${date.year} ${date.hour}:${date.minute}';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
   }
 }

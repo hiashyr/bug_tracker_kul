@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/services/yandex_auth.dart';
 
 class UnauthorizedView extends StatelessWidget {
   const UnauthorizedView({
@@ -34,6 +33,7 @@ class UnauthorizedView extends StatelessWidget {
                 try {
                   await onLoginPressed();
                 } catch (e) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Ошибка авторизации: $e')),
                   );

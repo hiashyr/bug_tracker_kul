@@ -4,7 +4,7 @@ import '../providers/comment_provider.dart';
 
 class CommentForm extends ConsumerStatefulWidget {
   final String issueId;
-  
+
   const CommentForm({super.key, required this.issueId});
 
   @override
@@ -13,15 +13,19 @@ class CommentForm extends ConsumerStatefulWidget {
 
 class _CommentFormState extends ConsumerState<CommentForm> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   bool _isSubmitting = false;
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
   Future<void> _sendComment() async {
+    if (_isSubmitting) return;
+
     final text = _controller.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,18 +42,26 @@ class _CommentFormState extends ConsumerState<CommentForm> {
       final addComment = ref.read(addCommentProvider);
       await addComment(widget.issueId, text);
 
+      if (!mounted) return;
+
       _controller.clear();
+      _focusNode.requestFocus();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Комментарий добавлен')),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка при добавлении: $e')),
       );
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -73,9 +85,11 @@ class _CommentFormState extends ConsumerState<CommentForm> {
               ),
               child: TextField(
                 controller: _controller,
+                focusNode: _focusNode,
                 maxLines: null,
                 minLines: 1,
                 maxLength: 1000,
+                onSubmitted: (_) => _sendComment(),
                 decoration: const InputDecoration(
                   hintText: 'Напишите комментарий...',
                   border: InputBorder.none,
@@ -91,13 +105,16 @@ class _CommentFormState extends ConsumerState<CommentForm> {
           const SizedBox(width: 8),
           IconButton(
             onPressed: _isSubmitting ? null : _sendComment,
-            icon: _isSubmitting
-                ? const CircularProgressIndicator()
-                : const Icon(Icons.send),
-            color: Colors.blue,
             style: IconButton.styleFrom(
-              backgroundColor: Colors.blue.shade50,
+              backgroundColor: Colors.blueAccent.shade100,
             ),
+            icon: _isSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send),
           ),
         ],
       ),

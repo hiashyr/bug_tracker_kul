@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/user_provider.dart';
-import '../providers/status_provider.dart';
 import '../models/user.dart';
+import '../providers/status_provider.dart';
+import '../providers/user_provider.dart';
 
 class QaEngineerSelector extends ConsumerStatefulWidget {
   final String issueId;
@@ -50,123 +50,90 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
             ],
           ),
           const SizedBox(height: 12),
-          
           usersAsync.when(
-            loading: () => const Center(
-              child: SizedBox(
-                height: 40,
-                child: LinearProgressIndicator(),
-              ),
+            loading: () => const SizedBox(
+              height: 40,
+              child: Center(child: LinearProgressIndicator()),
             ),
             error: (error, _) => Text(
               'Ошибка загрузки пользователей: $error',
               style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
-            data: (users) {
-              if (users.isEmpty) {
-                return const Text(
-                  'Нет доступных QA инженеров',
-                  style: TextStyle(color: Colors.grey),
-                );
-              }
-              
-              return Column(
-                children: [
-                  // Выпадающий список для выбора QA инженера
-                  DropdownButtonFormField<User>(
-                    decoration: const InputDecoration(
-                      labelText: 'Выберите QA инженера',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: users.map((user) {
-                      return DropdownMenuItem(
-                        value: user,
-                        child: Container(
-                          constraints: const BoxConstraints(maxWidth: 300),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      user.display,
-                                      style: const TextStyle(fontWeight: FontWeight.w500),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      user.login,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (user) {
-                      setState(() {
-                        _selectedEngineer = user;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Кнопка перевода
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading || _selectedEngineer == null
-                          ? null
-                          : () => _performTransition(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Перевести на тестирование'),
-                    ),
-                  ),
-                ],
-              );
-            },
+            data: (users) => _buildContent(context, users),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildContent(BuildContext context, List<User> users) {
+    if (users.isEmpty) {
+      return const Text(
+        'Нет доступных QA инженеров',
+        style: TextStyle(color: Colors.grey),
+      );
+    }
+
+    return Column(
+      children: [
+        DropdownButtonFormField<User>(
+          value: _selectedEngineer,
+          decoration: const InputDecoration(
+            labelText: 'Выберите QA инженера',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+          items: users.map((user) {
+            return DropdownMenuItem<User>(
+              value: user,
+              child: _UserMenuItem(user: user),
+            );
+          }).toList(),
+          onChanged: _isLoading
+              ? null
+              : (user) {
+                  setState(() {
+                    _selectedEngineer = user;
+                  });
+                },
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed:
+                _isLoading || _selectedEngineer == null ? null : _performTransition,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Перевести на тестирование'),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _performTransition() async {
-    if (_selectedEngineer == null) return;
+    if (_selectedEngineer == null || _isLoading) return;
 
     setState(() => _isLoading = true);
 
     try {
       final statusTransition = ref.read(statusTransitionProvider);
-      
-      // Выполняем переход в статус "testing" с указанием QA инженера
+
       await statusTransition(
         widget.issueId,
         'testing',
@@ -175,28 +142,63 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
         },
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Задача переведена на тестирование'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onTransitionComplete();
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Задача переведена на тестирование'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      widget.onTransitionComplete();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+}
+
+class _UserMenuItem extends StatelessWidget {
+  final User user;
+
+  const _UserMenuItem({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            user.display,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            user.login,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.grey,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 }
