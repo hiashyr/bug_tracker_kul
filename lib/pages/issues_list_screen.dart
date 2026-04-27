@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/issue.dart';
 import 'package:trying_flutter/providers/auth_provider.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
+import 'package:trying_flutter/widgets/app_header.dart';
 import 'package:trying_flutter/widgets/unauthorized_window.dart';
 import '../providers/error_helper.dart';
 import '../services/yandex_auth.dart';
@@ -13,7 +14,7 @@ class IssuesListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authAsync = ref.watch(authStateProvider);
+    final authAsync =  ref.watch(authStateProvider);
 
     return authAsync.when(
       loading: () => const Scaffold(
@@ -58,25 +59,7 @@ class IssuesListScreen extends ConsumerWidget {
         final issuesAsync = ref.watch(issuesProvider);
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Задачи на тестирование'),
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout),
-                tooltip: 'Выйти',
-                onPressed: () async {
-                  await YandexAuthService.logout();
-                  ref.invalidate(authStateProvider);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => ref.invalidate(issuesProvider),
-              ),
-            ],
-          ),
+          appBar: const AppHeader(),
           body: issuesAsync.when(
             loading: () => const Center(
               child: Column(

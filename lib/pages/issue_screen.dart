@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trying_flutter/widgets/app_header.dart';
 
 import '../models/status.dart';
 import '../providers/comment_provider.dart';
@@ -30,19 +31,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     final statusesAsync = ref.watch(statusesProvider(widget.issueId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Задача ${widget.issueId}'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshAll,
-          ),
-        ],
-      ),
+      appBar: const AppHeader(),
       body: Column(
         children: [
           Expanded(
