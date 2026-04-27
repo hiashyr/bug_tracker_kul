@@ -19,8 +19,7 @@ class ApiClient {
   final String _orgId = dotenv.get('ORG_ID');
   final http.Client _client;
 
-  ApiClient({http.Client? client})
-      : _client = client ?? LoggingClient();
+  ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
 
   static const Duration _requestTimeout = Duration(seconds: 15);
 
@@ -35,8 +34,10 @@ class ApiClient {
     // Пример, если бы у некоторых переходов были обязательные поля
     // 'transition_to_review': ['reviewerComment', 'reviewReason'],
     // 'transition_done': ['closedReason'],
-    'testing': ['qaEngineer'], // Это поле принимает username из запроса. Сущность User
-    'needInfo': ['pendingReplyFrom'] // Также принимает username из запроса.
+    'testing': [
+      'qaEngineer',
+    ], // Это поле принимает username из запроса. Сущность User
+    'needInfo': ['pendingReplyFrom'], // Также принимает username из запроса.
   };
 
   // Запрос на получение пользователей
@@ -69,30 +70,30 @@ class ApiClient {
       action: 'получение конкретного пользователя',
     );
   }
-  
-    // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
-    Future<void> statusTransition(
-      String issueId,
-      String transitionId, {
-      Map<String, dynamic> fieldValues = const {},
-    }) async {
-      final payload = _buildTransitionPayload(transitionId, fieldValues);
 
-      final response = await _sendRequest(
-        () => _client.post(
-          Uri.parse(
-            '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
-          ),
-          headers: _headers,
-          body: jsonEncode(payload),
+  // Запрос на переход в статус с полями. Поля берем из _transitionRequiredFields
+  Future<void> statusTransition(
+    String issueId,
+    String transitionId, {
+    Map<String, dynamic> fieldValues = const {},
+  }) async {
+    final payload = _buildTransitionPayload(transitionId, fieldValues);
+
+    final response = await _sendRequest(
+      () => _client.post(
+        Uri.parse(
+          '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
         ),
-        action: 'переход в статус',
-      );
+        headers: _headers,
+        body: jsonEncode(payload),
+      ),
+      action: 'переход в статус',
+    );
 
-      _validateStatus(response, 200, action: 'statusTransition');
-      // Нам не нужно парсить Status, так как статус уже изменился
-      return;
-    }
+    _validateStatus(response, 200, action: 'statusTransition');
+    // Нам не нужно парсить Status, так как статус уже изменился
+    return;
+  }
 
   Map<String, dynamic> _buildTransitionPayload(
     String transitionId, [
@@ -103,11 +104,9 @@ class ApiClient {
       return {};
     }
 
-    return {
-      for (final field in requiredFields) field: fieldValues[field],
-    };
+    return {for (final field in requiredFields) field: fieldValues[field]};
   }
-  
+
   // Метод для получения одной задачи по ID
   Future<Issue> fetchIssue(String issueId) async {
     final response = await _sendRequest(
@@ -204,13 +203,35 @@ class ApiClient {
     }, action: 'showIssues');
   }
 
+  // Получение ID аватарки пользователя из Яндекс профиля
+  Future<String?> fetchUserAvatarId() async {
+    final response = await _sendRequest(
+      () => _client.get(
+        Uri.parse('https://login.yandex.ru/info?format=json'),
+        headers: {'Authorization': 'OAuth ${YandexAuthService.accessToken}'},
+      ),
+      action: 'получение ID аватарки',
+    );
+
+    _validateStatus(response, 200, action: 'fetchUserAvatarId');
+    return _decodeJson(response.body, (json) {
+      final map = json as Map<String, dynamic>;
+      // Не забываем что у пользвоателя может быть дефолт ава
+      final isEmpty = map['is_avatar_empty'] as bool? ?? false;
+      final avatarId = map['default_avatar_id'] as String?;
+      if (isEmpty || avatarId == null || avatarId.isEmpty) return null;
+      return avatarId;
+    }, action: 'fetchUserAvatarId');
+  }
+
   // Универсальный метод для отправки HTTP-запросов с обработкой ошибок и логированием
   Future<http.Response> _sendRequest(
     Future<http.Response> Function() requestFn, {
     required String action,
   }) async {
     // Проверка наличия токена ДО отправки запроса
-    if (YandexAuthService.accessToken == null || YandexAuthService.accessToken!.isEmpty) {
+    if (YandexAuthService.accessToken == null ||
+        YandexAuthService.accessToken!.isEmpty) {
       throw ApiException(
         statusCode: 401,
         message: 'Авторизация требуется. Токен не найден при $action',
@@ -277,6 +298,7 @@ class ApiClient {
       throw JsonParsingException('Ошибка разбора JSON при $action', body);
     }
   }
+
   // Метод для извлечения сообщения об ошибке из тела ответа
   String _extractErrorMessage(http.Response response) {
     if (response.body.isEmpty) {

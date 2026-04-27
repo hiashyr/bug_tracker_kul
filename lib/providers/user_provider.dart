@@ -12,8 +12,22 @@ final usersProvider = FutureProvider<List<User>>((ref) async {
 });
 
 final currentUserProvider = FutureProvider<User?>((ref) async {
-  final user = await ref.watch(authStateProvider.future);
-  return user;
+  final authState = ref.watch(authStateProvider);
+
+  final authUser = authState.asData?.value;
+  if (authUser == null) return null;
+
+  final apiClient = ref.read(apiClientProvider);
+  final avatarId = await apiClient.fetchUserAvatarId();
+
+  return User(
+    login: authUser.login,
+    display: authUser.display,
+    email: authUser.email,
+    cloudUid: authUser.cloudUid,
+    defaultAvatarId: avatarId,
+    isAvatarEmpty: avatarId == null,
+  );
 });
 
 final validUsersProvider = FutureProvider<List<User>>((ref) async {
