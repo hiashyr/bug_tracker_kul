@@ -6,7 +6,7 @@ import 'api_client.dart';
 
 class YandexAuthService {
   static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
-  static const String redirectUri = 'http://localhost:62044/auth/callback';
+  static const String redirectUri = 'http://localhost:62044';
   static const String scopes = 'tracker:read tracker:write login:avatar';
 
   static final Logger _logger = Logger();
