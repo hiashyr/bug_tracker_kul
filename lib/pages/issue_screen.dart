@@ -34,44 +34,51 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       appBar: const AppHeader(),
       body: Column(
         children: [
-          Expanded(
-            flex: 2,
-            child: issueAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
+          // Блок карточки задачи - Ограничение максимальной ширины
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                
               ),
-              error: (error, _) => Center(
-                child: Text('Ошибка: $error'),
-              ),
-              data: (issue) {
-                final availableStatuses = statusesAsync.whenOrNull(
-                  data: (statuses) => statuses,
-                );
+              child: issueAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, _) => Center(
+                  child: Text('Ошибка: $error'),
+                ),
+                data: (issue) {
+                  final availableStatuses = statusesAsync.whenOrNull(
+                    data: (statuses) => statuses,
+                  );
 
-                return SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      IssueCard(
-                        issue: issue,
-                        onRefresh: _refreshIssueSection,
-                        onTransitionToTesting: _showQaEngineerSelector,
-                        availableStatuses: availableStatuses,
-                        onStatusSelected: _handleStatusTransition,
-                      ),
-                      if (_showQaSelector)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: QaEngineerSelector(
-                            issueId: widget.issueId,
-                            onTransitionComplete: _handleQaTransitionComplete,
-                          ),
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        IssueCard(
+                          issue: issue,
+                          onRefresh: _refreshIssueSection,
+                          onTransitionToTesting: _showQaEngineerSelector,
+                          availableStatuses: availableStatuses,
+                          onStatusSelected: _handleStatusTransition,
                         ),
-                    ],
-                  ),
-                );
-              },
+                        if (_showQaSelector)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: QaEngineerSelector(
+                              issueId: widget.issueId,
+                              onTransitionComplete: _handleQaTransitionComplete,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
+          
+          // Блок комментариев - занимает всю доступную ширину
           Expanded(
             flex: 3,
             child: commentsAsync.when(
