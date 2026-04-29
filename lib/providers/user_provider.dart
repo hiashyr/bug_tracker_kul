@@ -4,7 +4,7 @@ import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final usersProvider = FutureProvider<List<User>>((ref) async {
-  final user = await ref.watch(authStateProvider.future);
+  final user = ref.watch(authStateProvider);
   if (user == null) return [];
 
   final apiClient = ref.watch(apiClientProvider);
@@ -12,9 +12,7 @@ final usersProvider = FutureProvider<List<User>>((ref) async {
 });
 
 final currentUserProvider = FutureProvider<User?>((ref) async {
-  final authState = ref.watch(authStateProvider);
-
-  final authUser = authState.asData?.value;
+  final authUser = ref.watch(authStateProvider);
   if (authUser == null) return null;
 
   final apiClient = ref.read(apiClientProvider);
@@ -31,11 +29,9 @@ final currentUserProvider = FutureProvider<User?>((ref) async {
 });
 
 final validUsersProvider = FutureProvider<List<User>>((ref) async {
-  final user = await ref.watch(authStateProvider.future);
+  final user = ref.watch(authStateProvider);
   if (user == null) return [];
 
   final users = await ref.watch(usersProvider.future);
-  return users
-      .where((u) => u.cloudUid != null && u.cloudUid!.isNotEmpty)
-      .toList();
+  return users.where((u) => u.cloudUid != null && u.cloudUid!.isNotEmpty).toList();
 });

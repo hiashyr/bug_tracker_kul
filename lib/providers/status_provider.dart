@@ -5,7 +5,7 @@ import 'auth_provider.dart';
 import 'issue_provider.dart';
 
 final statusesProvider = FutureProvider.family<List<Status>, String>((ref, issueId) async {
-  final user = await ref.watch(authStateProvider.future);
+  final user = ref.watch(authStateProvider);
   if (user == null) return [];
 
   final apiClient = ref.watch(apiClientProvider);
@@ -18,7 +18,7 @@ final statusTransitionProvider = Provider((ref) {
     String transitionId, {
     Map<String, dynamic> fieldValues = const {},
   }) async {
-    final user = await ref.read(authStateProvider.future);
+    final user = ref.read(authStateProvider);
     if (user == null) {
       throw Exception('Пользователь не авторизован');
     }

@@ -4,7 +4,7 @@ import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issueId) async {
-  final user = await ref.watch(authStateProvider.future);
+  final user = ref.watch(authStateProvider);
   if (user == null) return [];
 
   final apiClient = ref.watch(apiClientProvider);
@@ -13,7 +13,7 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issu
 
 final addCommentProvider = Provider((ref) {
   return (String issueId, String commentText) async {
-    final user = await ref.read(authStateProvider.future);
+    final user = ref.read(authStateProvider);
     if (user == null) {
       throw Exception('Пользователь не авторизован');
     }
