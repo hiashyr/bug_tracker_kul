@@ -4,25 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trying_flutter/routes/app_router.dart';
 import 'package:trying_flutter/services/yandex_auth.dart';
 import 'package:web/web.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 Future<void> main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
-  
-  // Проверяем, есть ли хеш с access_token (OAuth callback)
-  final hash = window.location.hash;
-  if (hash.contains('access_token')) {
-    try {
-      await YandexAuthService.handleAuthCallback(hash);
-      // Очищаем хеш из URL после обработки
-      window.location.href = '/';
-    } catch (e) {
-      print('Ошибка обработки OAuth callback: $e');
-    }
-  } else {
-    await YandexAuthService.init();
-  }
-
+  await YandexAuthService.init();
   runApp(
     const ProviderScope(
       child: MyApp(),

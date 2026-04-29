@@ -13,7 +13,8 @@ class YandexAuthService {
 
   static Future<void> loginWithYandex() async {
     _logger.i('Начинаем процесс авторизации через Яндекс');
-    final authUrl = 'https://oauth.yandex.ru/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri&scope=$scopes';
+    final authUrl =
+        'https://oauth.yandex.ru/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri&scope=$scopes';
 
     if (await canLaunchUrl(Uri.parse(authUrl))) {
       await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self');
@@ -25,25 +26,26 @@ class YandexAuthService {
   }
 
   static Future<void> handleAuthCallback(String hash) async {
-    _logger.i('Обрабатываем callback с hash: $hash');
-    final params = _parseHash(hash);
-    if (params.containsKey('access_token')) {
-      _accessToken = params['access_token'];
-      _logger.i('Токен получен и сохранен');
-      await _saveTokenToStorage(_accessToken!);
-      
-      // Используем ApiClient
-      final apiClient = ApiClient();
-      _user = await apiClient.fetchCurrentUser();
-      _logger.i('Пользователь получен: ${_user?.display}');
-    } else {
-      _logger.e('Токен не найден в hash');
-      throw 'Токен не найден в URL';
-    }
+      try {
+        final params = _parseHash(hash);
+        _accessToken = params['access_token'];
+        _logger.i('Токен получен: $_accessToken');
+        await _saveTokenToStorage(_accessToken!);
+        _logger.i('Токен сохранен: $_accessToken');
+      } catch (e) {
+        _logger.e('Ошибка обработки OAuth callback: $e');
+      }
   }
 
   static Future<void> init() async {
     _logger.i('Инициализация YandexAuthService');
+    final hash = window.location.hash;
+    if (hash.contains('access_token')) {
+      _logger.i("Обнаружен hash с access_token, запускаем handleAuthCallback(hash)");
+        await handleAuthCallback(hash);
+      } else {
+        _logger.i("Hash не содержит access_token, пропускаем обработку callback");
+      }
     _accessToken = await loadTokenFromStorage();
     if (_accessToken != null) {
       _logger.i('Токен загружен из хранилища');
