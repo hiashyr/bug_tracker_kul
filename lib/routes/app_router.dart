@@ -6,6 +6,7 @@ import 'package:trying_flutter/pages/issues_list_screen.dart';
 /// Конфигурация маршрутов приложения
 final appRouter = GoRouter(
   initialLocation: '/',
+  debugLogDiagnostics: true,
   routes: [
     GoRoute(
       path: '/',
