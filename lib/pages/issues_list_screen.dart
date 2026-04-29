@@ -14,23 +14,30 @@ class IssuesListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authAsync =  ref.watch(authStateProvider);
+    final user = ref.watch(authStateProvider);
 
-    return authAsync.when(
-      loading: () => const Scaffold(
-        body: Center(
+    if (user == null) {
+      return UnauthorizedView(
+        onLoginPressed: () => YandexAuthService.loginWithYandex(),
+      );
+    }
+
+    final issuesAsync = ref.watch(issuesProvider);
+
+    return Scaffold(
+      appBar: const AppHeader(),
+      body: issuesAsync.when(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Проверяем авторизацию...'),
+              Text('Загрузка задач...'),
             ],
           ),
         ),
-      ),
-      error: (error, stackTrace) => Scaffold(
-        body: Center(
+        error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -38,88 +45,45 @@ class IssuesListScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 getErrorMessage(error),
+                style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(authStateProvider),
-                child: const Text('Повторить'),
-              ),
+              const SizedBox(height: 8),
+              if (canRetryError(error))
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(issuesProvider),
+                  child: const Text('Повторить'),
+                ),
             ],
           ),
         ),
-      ),
-      data: (user) {
-        if (user == null) {
-          return UnauthorizedView(
-            onLoginPressed: () => YandexAuthService.loginWithYandex(),
-          );
-        }
-        final issuesAsync = ref.watch(issuesProvider);
-
-        return Scaffold(
-          appBar: const AppHeader(),
-          body: issuesAsync.when(
-            loading: () => const Center(
+        data: (issues) {
+          if (issues.isEmpty) {
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  Icon(Icons.inbox, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
-                  Text('Загрузка задач...'),
-                ],
-              ),
-            ),
-            error: (error, stackTrace) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(getErrorIcon(error), color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
                   Text(
-                    getErrorMessage(error),
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+                    'Нет задач на тестировании',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
-                  const SizedBox(height: 8),
-                  if (canRetryError(error))
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(issuesProvider),
-                      child: const Text('Повторить'),
-                    ),
                 ],
               ),
-            ),
-            data: (issues) {
-              if (issues.isEmpty) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'Нет задач на тестировании',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                );
-              }
+            );
+          }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: issues.length,
-                itemBuilder: (context, index) {
-                  final issue = issues[index];
-                  return _buildIssueCard(context, issue);
-                },
-              );
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: issues.length,
+            itemBuilder: (context, index) {
+              final issue = issues[index];
+              return _buildIssueCard(context, issue);
             },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

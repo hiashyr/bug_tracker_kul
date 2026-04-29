@@ -36,10 +36,9 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
             ),
           ),
           data: (user) {
-            final avatarUrl = user?.avatarUrl;
-
             return PopupMenuButton<String>(
               tooltip: 'Аккаунт',
+              offset: const Offset(0, 40),
               onSelected: (value) async {
                 if (value == 'logout') {
                   await YandexAuthService.logout();
@@ -48,7 +47,7 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                 }
               },
               itemBuilder: (context) => const [
-                PopupMenuItem(
+                PopupMenuItem<String>(
                   value: 'logout',
                   child: Text('Выход из аккаунта'),
                 ),
@@ -57,10 +56,11 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                 padding: const EdgeInsets.only(right: 12),
                 child: CircleAvatar(
                   radius: 16,
+                  backgroundColor: Colors.white24,
                   backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? const Icon(Icons.person, size: 18)
+                      user?.avatarUrl != null ? NetworkImage(user!.avatarUrl!) : null,
+                  child: user?.avatarUrl == null
+                      ? const Icon(Icons.person, size: 18, color: Colors.white)
                       : null,
                 ),
               ),
