@@ -4,29 +4,25 @@ import 'package:trying_flutter/pages/issue_screen.dart';
 import 'package:trying_flutter/pages/issues_list_screen.dart';
 
 /// Конфигурация маршрутов приложения
-final appRouter = GoRouter(
+final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   debugLogDiagnostics: true,
-  routes: [
+  routes: <RouteBase>[
     GoRoute(
       path: '/',
-      name: 'issues_list_screen',
-      builder: (context, state) => const IssuesListScreen(),
-    ),
-    GoRoute(
-      path: '/issue/:issueId',
-      name: 'issue-detail',
-      builder: (context, state) {
-        final issueId = state.pathParameters['issueId']!;
-        return IssueScreen(issueId: issueId);
+      builder: (BuildContext context, GoRouterState state) {
+        return const IssuesListScreen();
       },
+      routes: <RouteBase>[
+        GoRoute(
+          path: 'issue/:issueId',
+          name: 'issue-detail',
+          builder: (BuildContext context, GoRouterState state) {
+            final issueId = state.pathParameters['issueId']!;
+            return IssueScreen(issueId: issueId);
+          },
+        ),
+      ],
     ),
   ],
-  // Обработка ошибок навигации
-  errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('Error')),
-    body: Center(
-      child: Text('Page not found: ${state.uri}'),
-    ),
-  ),
 );
