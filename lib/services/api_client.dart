@@ -229,16 +229,6 @@ class ApiClient {
     Future<http.Response> Function() requestFn, {
     required String action,
   }) async {
-    // Проверка наличия токена ДО отправки запроса
-    if (YandexAuthService.accessToken == null ||
-        YandexAuthService.accessToken!.isEmpty) {
-      throw ApiException(
-        statusCode: 401,
-        message: 'Авторизация требуется. Токен не найден при $action',
-        url: baseUrl,
-        details: 'Отсутствует токен доступа',
-      );
-    }
 
     try {
       return await requestFn().timeout(_requestTimeout);
