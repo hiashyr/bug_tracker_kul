@@ -6,7 +6,7 @@ import 'package:trying_flutter/providers/auth_provider.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
 import 'package:trying_flutter/widgets/app_header.dart';
 import 'package:trying_flutter/widgets/unauthorized_window.dart';
-import '../providers/error_helper.dart';
+import '../services/error_helper.dart';
 import '../services/yandex_auth.dart';
 
 class IssuesListScreen extends ConsumerWidget {

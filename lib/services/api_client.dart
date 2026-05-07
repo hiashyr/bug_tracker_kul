@@ -63,7 +63,7 @@ class ApiClient {
       action: 'получение текущего пользователя',
     );
 
-    _validateStatus(response, 200, action: 'fetchUsers');
+    _validateStatus(response, 200, action: 'fetchCurrentUser');
     return _decodeJson(
       response.body,
       (json) => User.fromJson(json as Map<String, dynamic>),

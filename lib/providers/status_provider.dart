@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trying_flutter/services/api_exceptions.dart';
 import '../models/status.dart';
 import '../services/api_client.dart';
 import 'auth_provider.dart';
@@ -20,7 +21,11 @@ final statusTransitionProvider = Provider((ref) {
   }) async {
     final user = ref.read(authStateProvider);
     if (user == null) {
-      throw Exception('Пользователь не авторизован');
+      throw ApiException(
+        statusCode: 401,
+        message: 'Требуется авторизация',
+        url: '',
+      );
     }
 
     final apiClient = ref.read(apiClientProvider);
