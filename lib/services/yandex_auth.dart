@@ -1,3 +1,4 @@
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:logger/logger.dart';
 import 'package:trying_flutter/models/user.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,7 +7,7 @@ import 'api_client.dart';
 
 class YandexAuthService {
   static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
-  static const String redirectUri = 'http://localhost:62044';
+  static const String redirectUri = 'http://localhost:62044/auth.html';
   static const String scopes = 'tracker:read tracker:write login:avatar';
 
   static final Logger _logger = Logger();
@@ -16,45 +17,47 @@ class YandexAuthService {
     final authUrl =
         'https://oauth.yandex.ru/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri&scope=$scopes';
 
-    if (await canLaunchUrl(Uri.parse(authUrl))) {
-      await launchUrl(Uri.parse(authUrl), webOnlyWindowName: '_self');
-      _logger.i('URL авторизации открыт успешно');
-    } else {
-      _logger.e('Не удалось открыть URL авторизации');
-      throw 'Не удалось открыть URL авторизации';
-    }
+    final fullAuthUrl = await FlutterWebAuth2.authenticate(
+      url: authUrl,
+      callbackUrlScheme: 'http',
+      options: const FlutterWebAuth2Options(
+        httpsHost: 'localhost',
+        httpsPath: '/auth.html',
+      ),
+    );
+    handleAuthCallback(fullAuthUrl);
   }
 
-  static Future<void> handleAuthCallback(String hash) async {
-      try {
-        final params = _parseHash(hash);
-        _accessToken = params['access_token'];
-        _logger.i('Токен получен: $_accessToken');
-        await _saveTokenToStorage(_accessToken!);
+  static void handleAuthCallback(String fullUrl) {
+    try {
+      final uri = Uri.parse(fullUrl);
+      final fragment = uri.fragment; // это "#access_token=...&..."
+      final params = _parseHash(fragment);
+
+      _accessToken = params['access_token'];
+      _logger.i('Токен получен: $_accessToken');
+      if (_accessToken != null) {
+        _saveTokenToStorage(_accessToken!);
         _logger.i('Токен сохранен: $_accessToken');
-      } catch (e) {
-        _logger.e('Ошибка обработки OAuth callback: $e');
+      } else {
+        _logger.w('Токен не найден в URL');
       }
+    } on Exception catch (e) {
+      _logger.e('Ошибка обработки OAuth callback: $e');
+    }
   }
 
   static Future<void> init() async {
     _logger.i('Инициализация YandexAuthService');
-    final hash = window.location.hash;
-    if (hash.contains('access_token')) {
-      _logger.i("Обнаружен hash с access_token, запускаем handleAuthCallback(hash)");
-        await handleAuthCallback(hash);
-      } else {
-        _logger.i("Hash не содержит access_token, пропускаем обработку callback");
-      }
+
     _accessToken = await loadTokenFromStorage();
     if (_accessToken != null) {
       _logger.i('Токен загружен из хранилища');
       try {
-        // Используем ApiClient метод
         final apiClient = ApiClient();
         _user = await apiClient.fetchCurrentUser();
         _logger.i('Пользователь восстановлен: ${_user?.display}');
-      } catch (e) {
+      } on Exception catch (e) {
         _logger.e('Ошибка восстановления пользователя: $e');
         _accessToken = null;
         _user = null;
