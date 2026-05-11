@@ -6,9 +6,10 @@ import 'auth_provider.dart';
 import 'issue_provider.dart';
 
 final statusesProvider = FutureProvider.family<List<Status>, String>((ref, issueId) async {
-  final user = ref.watch(authStateProvider);
-  if (user == null) return [];
-
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+      throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+    }
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchStatuses(issueId);
 });
@@ -19,13 +20,9 @@ final statusTransitionProvider = Provider((ref) {
     String transitionId, {
     Map<String, dynamic> fieldValues = const {},
   }) async {
-    final user = ref.read(authStateProvider);
-    if (user == null) {
-      throw ApiException(
-        statusCode: 401,
-        message: 'Требуется авторизация',
-        url: '',
-      );
+    final isAuthorized = ref.watch(isAuthorizedProvider);
+    if (!isAuthorized) {
+      throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
     }
 
     final apiClient = ref.read(apiClientProvider);

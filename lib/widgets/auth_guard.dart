@@ -1,32 +1,31 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trying_flutter/providers/auth_provider.dart';
-import 'package:trying_flutter/services/yandex_auth.dart';
 import 'package:trying_flutter/widgets/unauthorized_window.dart';
 
 class AuthGuard extends ConsumerWidget {
   final Widget child;
-  final Widget? unauthorizedChild;
 
-  const AuthGuard({
-    super.key,
-    required this.child,
-    this.unauthorizedChild,
-  });
+  const AuthGuard({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider);
+    final authState = ref.watch(authAuthorizerProvider);
 
-    if (user == null) {
-      return unauthorizedChild ??
-          UnauthorizedView(
+    return authState.when(
+      data: (isAuthorized) {
+        if (!isAuthorized) {
+          return UnauthorizedView(
             onLoginPressed: () async {
-              await YandexAuthService.loginWithYandex();
+              final notifier = ref.read(authAuthorizerProvider.notifier);
+              await notifier.login();
             },
           );
-    }
-
-    return child;
+        }
+        return child;
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Ошибка авторизации: $error')),
+    );
   }
 }

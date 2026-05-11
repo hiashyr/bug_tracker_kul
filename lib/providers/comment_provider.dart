@@ -5,8 +5,10 @@ import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issueId) async {
-  final user = ref.watch(authStateProvider);
-  if (user == null) return [];
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+      throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+    }
 
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchComments(issueId);
@@ -14,14 +16,10 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issu
 
 final addCommentProvider = Provider((ref) {
   return (String issueId, String commentText) async {
-    final user = ref.read(authStateProvider);
-    if (user == null) {
-      throw ApiException(
-        statusCode: 401,
-        message: 'Требуется авторизация',
-        url: '',
-      );
-    }
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+    throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+  }
 
     final apiClient = ref.read(apiClientProvider);
     final newComment = await apiClient.addingComment(issueId, commentText);

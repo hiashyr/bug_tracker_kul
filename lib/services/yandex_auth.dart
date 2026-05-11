@@ -1,7 +1,6 @@
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:logger/logger.dart';
 import 'package:trying_flutter/models/user.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart';
 import 'api_client.dart';
 
@@ -12,7 +11,7 @@ class YandexAuthService {
 
   static final Logger _logger = Logger();
 
-  static Future<void> loginWithYandex() async {
+  static Future<bool> loginWithYandex() async {
     _logger.i('Начинаем процесс авторизации через Яндекс');
     final authUrl =
         'https://oauth.yandex.ru/authorize?response_type=token&client_id=$clientId&redirect_uri=$redirectUri&scope=$scopes';
@@ -25,25 +24,31 @@ class YandexAuthService {
         httpsPath: '/auth.html',
       ),
     );
-    handleAuthCallback(fullAuthUrl);
+    final success = await handleAuthCallback(fullAuthUrl);
+    return success;
   }
 
-  static void handleAuthCallback(String fullUrl) {
+  static Future<bool> handleAuthCallback(String fullUrl) async {
+    _logger.i('Обработка OAuth callback: $fullUrl');
     try {
       final uri = Uri.parse(fullUrl);
-      final fragment = uri.fragment; // это "#access_token=...&..."
+      final fragment = uri.fragment;
       final params = _parseHash(fragment);
 
       _accessToken = params['access_token'];
       _logger.i('Токен получен: $_accessToken');
       if (_accessToken != null) {
+          await getUserInfo();
         _saveTokenToStorage(_accessToken!);
         _logger.i('Токен сохранен: $_accessToken');
-      } else {
-        _logger.w('Токен не найден в URL');
-      }
-    } on Exception catch (e) {
-      _logger.e('Ошибка обработки OAuth callback: $e');
+      return true;
+    } else {
+      _logger.w('[AUTH] token not found');
+      return false;
+    }
+  } catch (e) {
+      _logger.e('Ошибка при обработке OAuth callback: $e');
+      return false;
     }
   }
 
@@ -53,15 +58,8 @@ class YandexAuthService {
     _accessToken = await loadTokenFromStorage();
     if (_accessToken != null) {
       _logger.i('Токен загружен из хранилища');
-      try {
-        final apiClient = ApiClient();
-        _user = await apiClient.fetchCurrentUser();
-        _logger.i('Пользователь восстановлен: ${_user?.display}');
-      } on Exception catch (e) {
-        _logger.e('Ошибка восстановления пользователя: $e');
-        _accessToken = null;
-        _user = null;
-      }
+
+      await getUserInfo();
     } else {
       _logger.i('Токен не найден в хранилище');
     }
@@ -73,6 +71,21 @@ class YandexAuthService {
     _user = null;
     window.localStorage.removeItem('yandex_access_token');
     _logger.i('Токен удален из хранилища');
+  }
+
+  static Future<void> getUserInfo() async {
+    if (_accessToken == null) {
+      _logger.w('Нет токена для обновления пользователя');
+      return;
+    } else {
+        try {
+          final apiClient = ApiClient();
+          _user = await apiClient.fetchCurrentUser();
+          _logger.i('Пользователь получен: ${_user?.display}');
+        } catch (e) {
+          _logger.e('Ошибка при получении данных пользователя: $e');
+        }
+    }
   }
 
   static String? _accessToken;

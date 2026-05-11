@@ -14,13 +14,6 @@ class IssuesListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider);
-
-    if (user == null) {
-      return UnauthorizedView(
-        onLoginPressed: () => YandexAuthService.loginWithYandex(),
-      );
-    }
 
     final issuesAsync = ref.watch(issuesProvider);
 
