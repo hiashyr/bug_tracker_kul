@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/issue.dart';
-import 'package:trying_flutter/providers/auth_provider.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
-import 'package:trying_flutter/widgets/app_header.dart';
-import 'package:trying_flutter/widgets/unauthorized_window.dart';
 import '../services/error_helper.dart';
-import '../services/yandex_auth.dart';
 
 class IssuesListScreen extends ConsumerWidget {
   const IssuesListScreen({super.key});
@@ -17,9 +13,7 @@ class IssuesListScreen extends ConsumerWidget {
 
     final issuesAsync = ref.watch(issuesProvider);
 
-    return Scaffold(
-      appBar: const AppHeader(),
-      body: issuesAsync.when(
+    return issuesAsync.when(
         loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -76,8 +70,7 @@ class IssuesListScreen extends ConsumerWidget {
             },
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildIssueCard(BuildContext context, Issue issue) {

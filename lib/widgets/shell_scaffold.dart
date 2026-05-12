@@ -5,33 +5,42 @@ import 'package:trying_flutter/models/user.dart';
 import 'package:trying_flutter/providers/user_provider.dart';
 import '../providers/auth_provider.dart';
 
-class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
-  const AppHeader({super.key});
+class ShellScaffold extends ConsumerWidget {
+  final Widget child;
+  final bool showBackButton;
+
+  const ShellScaffold({
+    super.key,
+    required this.child,
+    this.showBackButton = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserAsync = ref.watch(currentUserProvider);
 
-    return AppBar(
-      title: const Text('Bug Tracker'),
-      actions: [
-        currentUserAsync.when(
-          data: (user) {
-            if (user == null) return const _DefaultAvatar();
-            return _UserAvatarWithLogout(user: user, ref: ref);
-          },
-          loading: () => const _LoadingAvatar(),
-          error: (error, stack) => const _DefaultAvatar(),
-        ),
-      ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Bug Tracker'),
+        leading: showBackButton
+            ? BackButton(onPressed: () => GoRouter.of(context).pop())
+            : null,
+        actions: [
+          currentUserAsync.when(
+            data: (user) {
+              if (user == null) return const _DefaultAvatar();
+              return _UserAvatarWithLogout(user: user, ref: ref);
+            },
+            loading: () => const _LoadingAvatar(),
+            error: (error, stack) => const _DefaultAvatar(),
+          ),
+        ],
+      ),
+      body: child,
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-// Отдельный виджет для loading состояния
 class _LoadingAvatar extends StatelessWidget {
   const _LoadingAvatar();
 
@@ -48,7 +57,6 @@ class _LoadingAvatar extends StatelessWidget {
   }
 }
 
-// Дефолтный аватар при ошибке
 class _DefaultAvatar extends StatelessWidget {
   const _DefaultAvatar();
 
@@ -65,7 +73,6 @@ class _DefaultAvatar extends StatelessWidget {
   }
 }
 
-// Аватар пользователя с кнопкой выхода справа
 class _UserAvatarWithLogout extends StatelessWidget {
   const _UserAvatarWithLogout({required this.user, required this.ref});
 
@@ -99,6 +106,7 @@ class _UserAvatarWithLogout extends StatelessWidget {
           onPressed: () async {
             final authNotifier = ref.read(authAuthorizerProvider.notifier);
             await authNotifier.logout();
+            context.go('/');
           },
         ),
       ],
