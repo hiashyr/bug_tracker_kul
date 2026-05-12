@@ -9,30 +9,20 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-    //TO DO: Переделать аватар. Уже ничего не сооброжаю
     final currentUserAsync = ref.watch(currentUserProvider);
 
-    return currentUserAsync.when(
-      data: (user) {
-        if (user == null) return const SizedBox.shrink();
-
-        final url = user.avatarUrl;
-        if (url == null) {
-          return CircleAvatar(
-            child: Text(user.display.substring(0, 1).toUpperCase()),
-          );
-        }
-
-        return CircleAvatar(
-          backgroundImage: NetworkImage(url),
-        );
-      },
-      loading: () => const CircleAvatar(child: CircularProgressIndicator()),
-      error: (error, stack) => CircleAvatar(
-        backgroundColor: Colors.red,
-        child: Text('!'),
-      ),
+    return AppBar(
+      title: const Text('Bug Tracker'),
+      actions: [
+        currentUserAsync.when(
+          data: (user) {
+            if (user == null) return const _DefaultAvatar();
+            return _UserAvatarWithLogout(user: user, ref: ref);
+          },
+          loading: () => const _LoadingAvatar(),
+          error: (error, stack) => const _DefaultAvatar(),
+        ),
+      ],
     );
   }
 
@@ -74,77 +64,43 @@ class _DefaultAvatar extends StatelessWidget {
   }
 }
 
-// Меню с аватаром пользователя
-class _UserAvatarMenu extends StatelessWidget {
-  const _UserAvatarMenu({required this.user, required this.ref});
+// Аватар пользователя с кнопкой выхода справа
+class _UserAvatarWithLogout extends StatelessWidget {
+  const _UserAvatarWithLogout({required this.user, required this.ref});
 
   final User user;
   final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: PopupMenuButton<String>(
-        offset: const Offset(0, kToolbarHeight),
-        onSelected: (value) async {
-          if (value == 'logout') {
-            final authNotifier = ref.read(authAuthorizerProvider.notifier);
-            await authNotifier.logout();
-          }
-        },
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: 'profile',
-            child: Row(
-              children: [
-                _buildAvatar(),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        user.display.isNotEmpty ? user.display : user.login,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (user.email.isNotEmpty)
-                        Text(
-                          user.email,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[100],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const PopupMenuItem(value: 'logout', child: Text('Выйти')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar() {
-    // Используем логику из модели User
     final avatarUrl = user.avatarUrl;
 
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: Colors.white24,
-      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-      child: avatarUrl == null
-          ? const Icon(Icons.person, size: 20, color: Colors.white)
-          : null,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white24,
+            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+            child: avatarUrl == null
+                ? Text(
+                    user.display.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  )
+                : null,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+          tooltip: 'Выйти',
+          onPressed: () async {
+            final authNotifier = ref.read(authAuthorizerProvider.notifier);
+            await authNotifier.logout();
+          },
+        ),
+      ],
     );
   }
 }
