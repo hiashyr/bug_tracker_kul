@@ -45,14 +45,9 @@ dependencies:
   web: ^1.1.1 
   flutter_web_auth_2: ^5.0.2
   
-  markdown_quill: ^4.3.0
-  markdown_editor_plus: ^0.2.15
-  flutter_quill_extensions: ^11.0.0
-  markdown: ^7.3.1
   flutter_localizations:
     sdk: flutter
   flutter_quill: ^11.5.1
-  flutter_markdown_plus: ^1.0.7
 
 dev_dependencies:
   flutter_test:
