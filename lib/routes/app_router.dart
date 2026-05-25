@@ -1,31 +1,43 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/pages/issue_screen.dart';
 import 'package:trying_flutter/pages/issues_list_screen.dart';
+import 'package:trying_flutter/widgets/auth_guard.dart';
+import 'package:trying_flutter/widgets/shell_scaffold.dart';
 
 /// Конфигурация маршрутов приложения
-final appRouter = GoRouter(
+final GoRouter appRouter = GoRouter(
   initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      name: 'issues_list_screen',
-      builder: (context, state) => const IssuesListScreen(),
-    ),
-    GoRoute(
-      path: '/issue/:issueId',
-      name: 'issue-detail',
-      builder: (context, state) {
-        final issueId = state.pathParameters['issueId']!;
-        return IssueScreen(issueId: issueId);
+  debugLogDiagnostics: true,
+  routes: <RouteBase>[
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        final isDetailPage = state.fullPath?.contains('/issue/') ?? false;
+        return AuthGuard(
+          child: ShellScaffold(
+            showBackButton: isDetailPage,
+            child: navigationShell,
+          ),
+        );
       },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, state) => const IssuesListScreen(),
+              routes: [
+                GoRoute(
+                  path: 'issue/:issueId',
+                  name: 'issue-detail',
+                  builder: (context, state) => IssueScreen(
+                    issueId: state.pathParameters['issueId']!,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     ),
   ],
-  // Обработка ошибок навигации
-  errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('Error')),
-    body: Center(
-      child: Text('Page not found: ${state.uri}'),
-    ),
-  ),
 );

@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trying_flutter/services/api_exceptions.dart';
 import '../models/comment.dart';
 import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issueId) async {
-  final user = await ref.watch(authStateProvider.future);
-  if (user == null) return [];
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+      throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+    }
 
   final apiClient = ref.watch(apiClientProvider);
   return apiClient.fetchComments(issueId);
@@ -13,10 +16,10 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issu
 
 final addCommentProvider = Provider((ref) {
   return (String issueId, String commentText) async {
-    final user = await ref.read(authStateProvider.future);
-    if (user == null) {
-      throw Exception('Пользователь не авторизован');
-    }
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+    throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+  }
 
     final apiClient = ref.read(apiClientProvider);
     final newComment = await apiClient.addingComment(issueId, commentText);

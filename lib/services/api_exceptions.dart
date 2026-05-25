@@ -56,7 +56,9 @@ class ApiException implements Exception {
   bool get isRetryable {
     return errorType == ApiErrorType.serverError ||
         statusCode == 408 ||
-        statusCode == 429;
+        statusCode == 429 ||
+        statusCode == 503 ||
+        statusCode == 422;
   }
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../services/api_exceptions.dart';
+import 'api_exceptions.dart';
 
 String getErrorMessage(Object error) {
   if (error is ApiException) {
@@ -50,15 +50,11 @@ IconData getErrorIcon(Object error) {
 }
 
 bool canRetryError(Object error) {
+  if (error is ApiException) {
+    return error.isRetryable;  // Просто используем его
+  }
   if (error is NetworkException) {
     return true;
   }
-
-  if (error is ApiException) {
-    return error.errorType == ApiErrorType.serverError ||
-        error.statusCode == 408 ||
-        error.statusCode == 429;
-  }
-
   return false;
 }

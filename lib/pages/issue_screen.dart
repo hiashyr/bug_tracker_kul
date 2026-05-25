@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trying_flutter/widgets/app_header.dart';
 
 import '../models/status.dart';
 import '../providers/comment_provider.dart';
@@ -30,9 +28,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     final commentsAsync = ref.watch(commentsProvider(widget.issueId));
     final statusesAsync = ref.watch(statusesProvider(widget.issueId));
 
-    return Scaffold(
-      appBar: const AppHeader(),
-      body: Column(
+    return Column(
         children: [
           // Блок карточки задачи - Ограничение максимальной ширины
           Center(
@@ -96,7 +92,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
           ),
           CommentForm(issueId: widget.issueId),
         ],
-      ),
     );
   }
 

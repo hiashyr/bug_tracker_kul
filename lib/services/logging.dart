@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
@@ -17,19 +18,18 @@ class LoggingClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    // Копируем тело запроса, чтобы можно было его прочитать
     String? bodyString;
     if (request is http.Request) {
       bodyString = request.body;
     }
-
+    
     final stopwatch = Stopwatch()..start();
 
-    // Отправляем запрос
     late final http.StreamedResponse response;
     try {
       response = await _inner.send(request);
     } catch (e, stackTrace) {
+      stopwatch.stop();
       if (_debugMode) {
         _logger.e(
           'HTTP request failed: ${request.method} ${request.url}\n$e\n$stackTrace',
@@ -39,28 +39,35 @@ class LoggingClient extends http.BaseClient {
     }
 
     stopwatch.stop();
-
-    // Читаем тело ответа
+    final receivedAt = DateTime.now().toUtc();
     final responseBody = await response.stream.bytesToString();
 
-    // Логируем только если DEBUG_MODE = true
     if (_debugMode) {
+      final requestBodyLog = bodyString != null && bodyString.isNotEmpty
+          ? '${_magenta}BODY:$_reset ${_truncateAndPrettyPrint(bodyString)}'
+          : '';
+
+      final responseBodyLog = responseBody.isNotEmpty
+          ? '${_magenta}BODY_OF_RESPONSE:$_reset ${_truncateAndPrettyPrint(responseBody)}'
+          : '';
+
       _logger.i('''
-    ${request.method} $_yellow${request.url}
+${request.method} $_yellow${request.url}$_reset
 
-    ${_magenta}HEADERS:$_reset ${request.headers}
+${_magenta}HEADERS:$_reset ${request.headers}
+${requestBodyLog.isNotEmpty ? '\n$requestBodyLog' : ''}
 
-    ${bodyString != null && bodyString.isNotEmpty ? '${_magenta}BODY:$_reset ${_truncateAndPrettyPrint(bodyString)}' : ''}
+$_cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$_reset
 
-    $_cyan━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$_reset
-    
-    ${_magenta}STATUS_OF_RESPONSE: $_reset${response.statusCode} $_reset(${stopwatch.elapsedMilliseconds}ms)
+${_magenta}RECEIVED AT  :$_reset ${receivedAt.toIso8601String()}
+${_magenta}TIME DURATION:$_reset ${_formatDuration(stopwatch.elapsed)}
 
-    ${responseBody.isNotEmpty ? '${_magenta}BODY_OF_RESPONSE: ${_truncateAndPrettyPrint(responseBody)}' : ''}
-    ''');
+${_magenta}STATUS_OF_RESPONSE:$_reset ${response.statusCode}
+
+${responseBodyLog.isNotEmpty ? '\n$responseBodyLog' : ''}
+''');
     }
 
-    // Возвращаем новый StreamedResponse с тем же телом
     return http.StreamedResponse(
       Stream.value(utf8.encode(responseBody)),
       response.statusCode,
@@ -99,6 +106,11 @@ class LoggingClient extends http.BaseClient {
     } catch (_) {
       return jsonString;
     }
+  }
+
+  String _formatDuration(Duration duration) {
+    final ms = duration.inMicroseconds / 1000.0;
+    return '${ms.toStringAsFixed(6)}ms';
   }
 
   @override

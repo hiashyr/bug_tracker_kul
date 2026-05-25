@@ -2,35 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/issue.dart';
-import 'package:trying_flutter/providers/auth_provider.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
-import 'package:trying_flutter/widgets/app_header.dart';
-import 'package:trying_flutter/widgets/unauthorized_window.dart';
-import '../providers/error_helper.dart';
-import '../services/yandex_auth.dart';
+import '../services/error_helper.dart';
 
 class IssuesListScreen extends ConsumerWidget {
   const IssuesListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authAsync =  ref.watch(authStateProvider);
 
-    return authAsync.when(
-      loading: () => const Scaffold(
-        body: Center(
+    final issuesAsync = ref.watch(issuesProvider);
+
+    return issuesAsync.when(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Проверяем авторизацию...'),
+              Text('Загрузка задач...'),
             ],
           ),
         ),
-      ),
-      error: (error, stackTrace) => Scaffold(
-        body: Center(
+        error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -38,89 +32,45 @@ class IssuesListScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 getErrorMessage(error),
+                style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(authStateProvider),
-                child: const Text('Повторить'),
-              ),
+              const SizedBox(height: 8),
+              if (canRetryError(error))
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(issuesProvider),
+                  child: const Text('Повторить'),
+                ),
             ],
           ),
         ),
-      ),
-      data: (user) {
-        if (user == null) {
-          return UnauthorizedView(
-            onLoginPressed: () => YandexAuthService.loginWithYandex(),
-          );
-        }
-        final issuesAsync = ref.watch(issuesProvider);
-
-        return Scaffold(
-          appBar: const AppHeader(),
-          body: issuesAsync.when(
-            loading: () => const Center(
+        data: (issues) {
+          if (issues.isEmpty) {
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  Icon(Icons.inbox, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
-                  Text('Загрузка задач...'),
-                ],
-              ),
-            ),
-            error: (error, stackTrace) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(getErrorIcon(error), color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
                   Text(
-                    getErrorMessage(error),
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+                    'Нет задач на тестировании',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
-                  const SizedBox(height: 8),
-                  if (canRetryError(error))
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(issuesProvider),
-                      child: const Text('Повторить'),
-                    ),
                 ],
               ),
-            ),
-            data: (issues) {
-              if (issues.isEmpty) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'Нет задач на тестировании',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                );
-              }
+            );
+          }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: issues.length,
-                itemBuilder: (context, index) {
-                  final issue = issues[index];
-                  return _buildIssueCard(context, issue);
-                },
-              );
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: issues.length,
+            itemBuilder: (context, index) {
+              final issue = issues[index];
+              return _buildIssueCard(context, issue);
             },
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
   }
 
   Widget _buildIssueCard(BuildContext context, Issue issue) {
@@ -129,7 +79,7 @@ class IssuesListScreen extends ConsumerWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => context.push('/issue/${issue.id}'),
+        onTap: () => context.go('/issue/${issue.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),

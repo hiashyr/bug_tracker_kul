@@ -42,32 +42,26 @@ class ApiClient {
 
   // Запрос на получение пользователей
   Future<List<User>> fetchUsers() async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.get(Uri.parse('$baseUrl/users'), headers: _headers),
+      200,
+      (json) {
+        final list = json as List<dynamic>;
+        return list
+            .map((item) => User.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
       action: 'получение пользователей',
     );
-
-    _validateStatus(response, 200, action: 'fetchUsers');
-    return _decodeJson(response.body, (json) {
-      final list = json as List<dynamic>;
-      return list
-          .map((item) => User.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }, action: 'fetchUsers');
   }
 
   // Запрос на получение конкретного пользователя
   Future<User> fetchCurrentUser() async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.get(Uri.parse('$baseUrl/myself'), headers: _headers),
-      action: 'получение текущего пользователя',
-    );
-
-    _validateStatus(response, 200, action: 'fetchUsers');
-    return _decodeJson(
-      response.body,
+      200,
       (json) => User.fromJson(json as Map<String, dynamic>),
-      action: 'получение конкретного пользователя',
+      action: 'получение текущего пользователя',
     );
   }
 
@@ -79,20 +73,41 @@ class ApiClient {
   }) async {
     final payload = _buildTransitionPayload(transitionId, fieldValues);
 
-    final response = await _sendRequest(
-      () => _client.post(
+    try {
+      final response = await _client.post(
         Uri.parse(
           '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
         ),
         headers: _headers,
         body: jsonEncode(payload),
-      ),
-      action: 'переход в статус',
-    );
+      ).timeout(_requestTimeout);
 
-    _validateStatus(response, 200, action: 'statusTransition');
-    // Нам не нужно парсить Status, так как статус уже изменился
-    return;
+      if (response.statusCode != 200) {
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: 'Ошибка при переходе в статус: ${response.reasonPhrase ?? 'неверный ответ'}',
+          url: response.request?.url.toString() ?? baseUrl,
+          details: _extractErrorMessage(response),
+        );
+      }
+    } on SocketException catch (e) {
+      throw NetworkException('Нет соединения при переходе в статус', originalException: e);
+    } on TimeoutException catch (e) {
+      throw NetworkException('Таймаут при переходе в статус', originalException: e);
+    } on http.ClientException catch (e) {
+      throw NetworkException('Ошибка HTTP при переходе в статус: ${e.message}', originalException: e);
+    } on ApiException {
+      rethrow;
+    } on NetworkException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        statusCode: -1,
+        message: 'Непредвиденная ошибка при переходе в статус',
+        url: baseUrl,
+        details: e.toString(),
+      );
+    }
   }
 
   Map<String, dynamic> _buildTransitionPayload(
@@ -109,15 +124,10 @@ class ApiClient {
 
   // Метод для получения одной задачи по ID
   Future<Issue> fetchIssue(String issueId) async {
-    final response = await _sendRequest(
+    return _request(
       () =>
           _client.get(Uri.parse('$baseUrl/issues/$issueId'), headers: _headers),
-      action: 'получение задачи',
-    );
-
-    _validateStatus(response, 200, action: 'fetchIssue');
-    return _decodeJson(
-      response.body,
+      200,
       (json) => Issue.fromJson(json as Map<String, dynamic>),
       action: 'получение задачи',
     );
@@ -125,64 +135,57 @@ class ApiClient {
 
   // Метод для получения статусов, в которые задача может перейти
   Future<List<Status>> fetchStatuses(String issueId) async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.get(
         Uri.parse('$baseUrl/issues/$issueId/transitions'),
         headers: _headers,
       ),
+      200,
+      (json) {
+        final list = json as List<dynamic>;
+        return list
+            .map((item) => Status.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
       action: 'получение статусов',
     );
-
-    _validateStatus(response, 200, action: 'fetchStatuses');
-    return _decodeJson(response.body, (json) {
-      final list = json as List<dynamic>;
-      return list
-          .map((item) => Status.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }, action: 'fetchStatuses');
   }
 
   // Методя для получения комментариев задачи
   Future<List<Comment>> fetchComments(String issueId) async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.get(
         Uri.parse('$baseUrl/issues/$issueId/comments'),
         headers: _headers,
       ),
+      200,
+      (json) {
+        final list = json as List<dynamic>;
+        return list
+            .map((item) => Comment.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
       action: 'получение комментариев',
     );
-
-    _validateStatus(response, 200, action: 'fetchComments');
-    return _decodeJson(response.body, (json) {
-      final list = json as List<dynamic>;
-      return list
-          .map((item) => Comment.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }, action: 'fetchComments');
   }
 
   // Метод для добавления комментария к задаче
   Future<Comment> addingComment(String issueId, String commentText) async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.post(
         Uri.parse('$baseUrl/issues/$issueId/comments'),
         headers: _headers,
         body: jsonEncode({'text': commentText}),
       ),
-      action: 'добавление комментария',
-    );
-
-    _validateStatus(response, 201, action: 'addingComment');
-    return _decodeJson(
-      response.body,
+      201,
       (json) => Comment.fromJson(json as Map<String, dynamic>),
-      action: 'addingComment',
+      action: 'добавление комментария',
     );
   }
 
   // Метод для получения списка задач по статусу "Можно тестировать"
   Future<List<Issue>> showIssues() async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.post(
         Uri.parse('$baseUrl/issues/_search?expand=transitions'),
         headers: _headers,
@@ -191,111 +194,92 @@ class ApiClient {
           'order': '+status',
         }),
       ),
+      200,
+      (json) {
+        final list = json as List<dynamic>;
+        return list
+            .map((item) => Issue.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
       action: 'получение списка задач',
     );
-
-    _validateStatus(response, 200, action: 'showIssues');
-    return _decodeJson(response.body, (json) {
-      final list = json as List<dynamic>;
-      return list
-          .map((item) => Issue.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }, action: 'showIssues');
   }
 
   // Получение ID аватарки пользователя из Яндекс профиля
   Future<String?> fetchUserAvatarId() async {
-    final response = await _sendRequest(
+    return _request(
       () => _client.get(
         Uri.parse('https://login.yandex.ru/info?format=json'),
         headers: {'Authorization': 'OAuth ${YandexAuthService.accessToken}'},
       ),
+      200,
+      (json) {
+        final map = json as Map<String, dynamic>;
+        // Не забываем что у пользвоателя может быть дефолт ава
+        final isEmpty = map['is_avatar_empty'] as bool? ?? false;
+        final avatarId = map['default_avatar_id'] as String?;
+        if (isEmpty || avatarId == null || avatarId.isEmpty) return null;
+        return avatarId;
+      },
       action: 'получение ID аватарки',
     );
-
-    _validateStatus(response, 200, action: 'fetchUserAvatarId');
-    return _decodeJson(response.body, (json) {
-      final map = json as Map<String, dynamic>;
-      // Не забываем что у пользвоателя может быть дефолт ава
-      final isEmpty = map['is_avatar_empty'] as bool? ?? false;
-      final avatarId = map['default_avatar_id'] as String?;
-      if (isEmpty || avatarId == null || avatarId.isEmpty) return null;
-      return avatarId;
-    }, action: 'fetchUserAvatarId');
   }
 
-  // Универсальный метод для отправки HTTP-запросов с обработкой ошибок и логированием
-  Future<http.Response> _sendRequest(
-    Future<http.Response> Function() requestFn, {
+  // Универсальный generic метод для всех API запросов
+  Future<T> _request<T>(
+    Future<http.Response> Function() requestFn,
+    int expectedStatus,
+    T Function(dynamic json) parser, {
     required String action,
   }) async {
-    // Проверка наличия токена ДО отправки запроса
-    if (YandexAuthService.accessToken == null ||
-        YandexAuthService.accessToken!.isEmpty) {
-      throw ApiException(
-        statusCode: 401,
-        message: 'Авторизация требуется. Токен не найден при $action',
-        url: baseUrl,
-        details: 'Отсутствует токен доступа',
-      );
-    }
-
     try {
-      return await requestFn().timeout(_requestTimeout);
+      final response = await requestFn().timeout(_requestTimeout);
+
+      // Валидация статуса ответа
+      if (response.statusCode != expectedStatus) {
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: 'Ошибка при $action: ${response.reasonPhrase ?? 'неверный ответ'}',
+          url: response.request?.url.toString() ?? baseUrl,
+          details: _extractErrorMessage(response),
+        );
+      }
+
+      // Парсинг JSON ответа
+      try {
+        final decoded = jsonDecode(response.body);
+        return parser(decoded);
+      } on FormatException {
+        throw JsonParsingException('Ошибка разбора JSON при $action', response.body);
+      }
     } on SocketException catch (e) {
       throw NetworkException(
-        'Нет соединения с сетью при $action',
+        'Нет соединения при $action',
         originalException: e,
       );
     } on TimeoutException catch (e) {
       throw NetworkException(
-        'Таймаут запроса при $action',
+        'Таймаут при $action',
         originalException: e,
       );
     } on http.ClientException catch (e) {
       throw NetworkException(
-        'Ошибка HTTP клиента при $action: ${e.message}',
+        'Ошибка HTTP при $action: ${e.message}',
         originalException: e,
       );
+    } on ApiException {
+      rethrow;
+    } on NetworkException {
+      rethrow;
+    } on JsonParsingException {
+      rethrow;
     } catch (e) {
       throw ApiException(
         statusCode: -1,
-        message: 'Непредвиденная ошибка при $action: $e',
+        message: 'Непредвиденная ошибка при $action',
         url: baseUrl,
         details: e.toString(),
       );
-    }
-  }
-
-  // Валидация статуса ответа
-  void _validateStatus(
-    http.Response response,
-    int expectedStatus, {
-    required String action,
-  }) {
-    if (response.statusCode != expectedStatus) {
-      final errorMessage = _extractErrorMessage(response);
-      throw ApiException(
-        statusCode: response.statusCode,
-        message:
-            'Ошибка сервера при $action: ${response.reasonPhrase ?? 'неверный ответ'}',
-        url: response.request?.url.toString() ?? baseUrl,
-        details: errorMessage,
-      );
-    }
-  }
-
-  // Универсальный метод для декодирования JSON с обработкой ошибок
-  T _decodeJson<T>(
-    String body,
-    T Function(dynamic json) parser, {
-    required String action,
-  }) {
-    try {
-      final decoded = jsonDecode(body);
-      return parser(decoded);
-    } on FormatException catch (_) {
-      throw JsonParsingException('Ошибка разбора JSON при $action', body);
     }
   }
 
