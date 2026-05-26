@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/comment.dart';
+import '../theme/app_colors.dart';
 
 class CommentList extends StatelessWidget {
   final List<Comment> comments;
@@ -62,13 +63,13 @@ class _EmptyCommentsState extends StatelessWidget {
           Icon(
             Icons.chat_bubble_outline,
             size: 56,
-            color: Colors.grey.shade400,
+            color: AppColors.greyMedium.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 12),
           Text(
             'Комментариев пока нет',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
+                  color: AppColors.greyMedium,
                 ),
           ),
         ],
@@ -109,7 +110,7 @@ class _CommentCard extends StatelessWidget {
                 Text(
                   _formatDate(comment.createdAt),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
+                    color: AppColors.greyMedium,
                   ),
                 ),
               ],
@@ -125,7 +126,7 @@ class _CommentCard extends StatelessWidget {
               Text(
                 'Изменён: ${_formatDate(comment.updatedAt!)}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
+                  color: AppColors.greyMedium,
                   fontStyle: FontStyle.italic,
                 ),
               ),

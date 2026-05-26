@@ -5,6 +5,7 @@ import '../models/status.dart';
 import '../providers/comment_provider.dart';
 import '../providers/issue_provider.dart';
 import '../providers/status_provider.dart';
+import '../theme/app_colors.dart';
 import '../widgets/comment_form.dart';
 import '../widgets/comment_list.dart';
 import '../widgets/issue_card.dart';
@@ -30,13 +31,9 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
 
     return Column(
         children: [
-          // Блок карточки задачи - Ограничение максимальной ширины
+          // Блок карточки задачи
           Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                
-              ),
-              child: issueAsync.when(
+            child: issueAsync.when(
                 loading: () => const Center(
                   child: CircularProgressIndicator(),
                 ),
@@ -71,9 +68,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   );
                 },
               ),
-            ),
           ),
-          
+
           // Блок комментариев - занимает всю доступную ширину
           Expanded(
             flex: 3,
@@ -93,18 +89,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
           CommentForm(issueId: widget.issueId),
         ],
     );
-  }
-
-  Future<void> _refreshAll() async {
-    ref.invalidate(issueProvider(widget.issueId));
-    ref.invalidate(commentsProvider(widget.issueId));
-    ref.invalidate(statusesProvider(widget.issueId));
-
-    if (_showQaSelector) {
-      setState(() {
-        _showQaSelector = false;
-      });
-    }
   }
 
   Future<void> _refreshIssueSection() async {
@@ -168,7 +152,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Статус изменен на "${selectedStatus.display}"'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
     } catch (e) {
@@ -178,7 +162,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     }
