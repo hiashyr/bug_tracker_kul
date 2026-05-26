@@ -65,7 +65,7 @@ flutter:
   fonts:
     - family: Granate
       fonts:
-        - asset: fonts/Granate-Regular.ttf
+        - asset: fonts/Granate_VF.ttf
 
 
   assets:
