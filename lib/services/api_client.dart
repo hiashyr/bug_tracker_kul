@@ -73,41 +73,18 @@ class ApiClient {
   }) async {
     final payload = _buildTransitionPayload(transitionId, fieldValues);
 
-    try {
-      final response = await _client.post(
+    await _request<Null>(
+      () => _client.post(
         Uri.parse(
           '$baseUrl/issues/$issueId/transitions/$transitionId/_execute',
         ),
         headers: _headers,
         body: jsonEncode(payload),
-      ).timeout(_requestTimeout);
-
-      if (response.statusCode != 200) {
-        throw ApiException(
-          statusCode: response.statusCode,
-          message: 'Ошибка при переходе в статус: ${response.reasonPhrase ?? 'неверный ответ'}',
-          url: response.request?.url.toString() ?? baseUrl,
-          details: _extractErrorMessage(response),
-        );
-      }
-    } on SocketException catch (e) {
-      throw NetworkException('Нет соединения при переходе в статус', originalException: e);
-    } on TimeoutException catch (e) {
-      throw NetworkException('Таймаут при переходе в статус', originalException: e);
-    } on http.ClientException catch (e) {
-      throw NetworkException('Ошибка HTTP при переходе в статус: ${e.message}', originalException: e);
-    } on ApiException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        statusCode: -1,
-        message: 'Непредвиденная ошибка при переходе в статус',
-        url: baseUrl,
-        details: e.toString(),
-      );
-    }
+      ),
+      200,
+      (_) => null,
+      action: 'переход в статус',
+    );
   }
 
   Map<String, dynamic> _buildTransitionPayload(

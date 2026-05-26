@@ -13,7 +13,7 @@ final issueProvider = FutureProvider.family<Issue, String>((ref, issueId) async 
   return apiClient.fetchIssue(issueId);  
 });
 
-final issuesProvider = FutureProvider<List<Issue>>((ref) async {  
+final issuesProvider = FutureProvider<List<Issue>>((ref) async {
   final isAuthorized = ref.watch(isAuthorizedProvider);
   if (!isAuthorized) {
       throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
