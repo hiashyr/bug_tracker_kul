@@ -62,6 +62,11 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  fonts:
+    - family: Granate
+      fonts:
+        - asset: fonts/Granate-Regular.ttf
+
 
   assets:
     - .env
