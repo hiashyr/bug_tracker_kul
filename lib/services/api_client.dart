@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:trying_flutter/models/user.dart';
+import 'package:logger/logger.dart';
 import 'package:trying_flutter/services/logging.dart';
 
 import '../models/comment.dart';
@@ -18,6 +19,7 @@ class ApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
   final http.Client _client;
+  final Logger _logger = Logger();
 
   ApiClient({http.Client? client}) : _client = client ?? LoggingClient();
 
@@ -214,6 +216,12 @@ class ApiClient {
 
       // Валидация статуса ответа
       if (response.statusCode != expectedStatus) {
+        _logger.e(
+          '❌ API Error: $action\n'
+          '   Status: ${response.statusCode} (expected $expectedStatus)\n'
+          '   URL: ${response.request?.url ?? baseUrl}\n'
+          '   Body: ${_extractErrorMessage(response)}',
+        );
         throw ApiException(
           statusCode: response.statusCode,
           message: 'Ошибка при $action: ${response.reasonPhrase ?? 'неверный ответ'}',
@@ -227,19 +235,38 @@ class ApiClient {
         final decoded = jsonDecode(response.body);
         return parser(decoded);
       } on FormatException {
+        _logger.e(
+          '❌ JSON Parse Error: $action\n'
+          '   Body: ${response.body.length > 500 ? '${response.body.substring(0, 500)}... [truncated]' : response.body}',
+        );
         throw JsonParsingException('Ошибка разбора JSON при $action', response.body);
       }
-    } on SocketException catch (e) {
+    } on SocketException catch (e, st) {
+      _logger.e(
+        '❌ Network Error (SocketException): $action\n'
+        '   $e\n'
+        '$st',
+      );
       throw NetworkException(
         'Нет соединения при $action',
         originalException: e,
       );
-    } on TimeoutException catch (e) {
+    } on TimeoutException catch (e, st) {
+      _logger.e(
+        '❌ Network Error (Timeout): $action\n'
+        '   $e\n'
+        '$st',
+      );
       throw NetworkException(
         'Таймаут при $action',
         originalException: e,
       );
-    } on http.ClientException catch (e) {
+    } on http.ClientException catch (e, st) {
+      _logger.e(
+        '❌ Network Error (ClientException): $action\n'
+        '   ${e.message}\n'
+        '$st',
+      );
       throw NetworkException(
         'Ошибка HTTP при $action: ${e.message}',
         originalException: e,
@@ -250,7 +277,12 @@ class ApiClient {
       rethrow;
     } on JsonParsingException {
       rethrow;
-    } catch (e) {
+    } catch (e, st) {
+      _logger.e(
+        '❌ Unexpected Error: $action\n'
+        '   $e\n'
+        '$st',
+      );
       throw ApiException(
         statusCode: -1,
         message: 'Непредвиденная ошибка при $action',
