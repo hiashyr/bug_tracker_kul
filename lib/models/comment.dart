@@ -21,7 +21,7 @@ class Comment {
       createdAt: DateTime.parse(json['createdAt']),
       createdBy: json['createdBy']['display'],
       updatedAt: DateTime.tryParse(json['updatedAt']),
-      updatedBy: json['updatedBy']['display'] ?? '', 
+      updatedBy: json['updatedBy']?['display'] ?? '', 
     );
   }
 }
