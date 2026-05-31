@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:trying_flutter/main.dart';
 import 'package:trying_flutter/pages/issue_screen.dart';
 import 'package:trying_flutter/pages/issues_list_screen.dart';
 import 'package:trying_flutter/widgets/auth_guard.dart';
@@ -24,7 +25,7 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/',
-              builder: (context, state) => const IssuesListScreen(),
+              builder: (context, state) => const NewDio(),
               routes: [
                 GoRoute(
                   path: 'issue/:issueId',
