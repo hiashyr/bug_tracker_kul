@@ -2,7 +2,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:logger/logger.dart';
 import 'package:trying_flutter/models/user.dart';
 import 'package:web/web.dart';
-import 'api_client.dart';
+import 'new_api_client.dart';
 
 class YandexAuthService {
   static const String clientId = '500a9873ee2c4f5b83553ae164b5bab6';
@@ -79,7 +79,7 @@ class YandexAuthService {
       return;
     } else {
         try {
-          final apiClient = ApiClient();
+          final apiClient = NewApiClient();
           _user = await apiClient.fetchCurrentUser();
           _logger.i('Пользователь получен: ${_user?.display}');
         } catch (e) {

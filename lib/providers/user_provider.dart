@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trying_flutter/services/api_exceptions.dart';
 import 'package:trying_flutter/services/new_api_client.dart';
 import '../models/user.dart';
-import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final usersProvider = FutureProvider<List<User>>((ref) async {
@@ -20,7 +19,7 @@ final currentUserProvider = FutureProvider<User?>((ref) async {
     throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');
   }
 
-  final apiClient = ref.read(apiClientProvider);
+  final apiClient = ref.read(newApiClientProvider);
   final defaultAvatarId = await apiClient.fetchUserAvatarId();
   final apiUser = await apiClient.fetchCurrentUser();
 

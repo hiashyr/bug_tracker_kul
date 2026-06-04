@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trying_flutter/services/api_exceptions.dart';
 import '../models/status.dart';
-import '../services/api_client.dart';
+import '../services/new_api_client.dart';
 import 'auth_provider.dart';
 import 'issue_provider.dart';
 
@@ -10,7 +10,7 @@ final statusesProvider = FutureProvider.family<List<Status>, String>((ref, issue
   if (!isAuthorized) {
       throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
     }
-  final apiClient = ref.watch(apiClientProvider);
+  final apiClient = ref.watch(newApiClientProvider);
   return apiClient.fetchStatuses(issueId);
 });
 
@@ -25,7 +25,7 @@ final statusTransitionProvider = Provider((ref) {
       throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
     }
 
-    final apiClient = ref.read(apiClientProvider);
+    final apiClient = ref.read(newApiClientProvider);
 
     await apiClient.statusTransition(
       issueId,

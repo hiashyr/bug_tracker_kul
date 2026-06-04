@@ -4,7 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:trying_flutter/models/comment.dart';
 import 'package:trying_flutter/models/issue.dart';
+import 'package:trying_flutter/models/status.dart';
 import 'package:trying_flutter/models/user.dart';
 
 import '../services/api_exceptions.dart';
@@ -158,6 +160,25 @@ class NewApiClient {
     }
   }
 
+  static const Map<String, List<String>> _transitionRequiredFields = {
+    'testing': [
+      'qaEngineer',
+    ],
+    'needInfo': ['pendingReplyFrom'],
+  };
+
+  Map<String, dynamic> _buildTransitionPayload(
+    String transitionId, [
+    Map<String, dynamic> fieldValues = const {},
+  ]) {
+    final requiredFields = _transitionRequiredFields[transitionId];
+    if (requiredFields == null || requiredFields.isEmpty) {
+      return {};
+    }
+
+    return {for (final field in requiredFields) field: fieldValues[field]};
+  }
+
   /// Запрос на получение пользователей
   Future<List<User>> fetchUsers() async {
     return _executeRequest(
@@ -172,6 +193,88 @@ class NewApiClient {
     );
   }
 
+  /// Запрос на получение конкретного пользователя
+  Future<User> fetchCurrentUser() async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get('/myself');
+        return User.fromJson(response.data as Map<String, dynamic>);
+      },
+      'получение текущего пользователя',
+    );
+  }
+
+  /// Запрос на переход в статус с полями
+  Future<void> statusTransition(
+    String issueId,
+    String transitionId, {
+    Map<String, dynamic> fieldValues = const {},
+  }) async {
+    final payload = _buildTransitionPayload(transitionId, fieldValues);
+
+    await _executeRequest<Null>(
+      () async {
+        await _dio.post(
+          '/issues/$issueId/transitions/$transitionId/_execute',
+          data: payload,
+        );
+        return null;
+      },
+      'переход в статус',
+    );
+  }
+
+  /// Метод для получения статусов, в которые задача может перейти
+  Future<List<Status>> fetchStatuses(String issueId) async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get('/issues/$issueId/transitions');
+        final list = response.data as List<dynamic>;
+        return list
+            .map((item) => Status.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
+      'получение статусов',
+    );
+  }
+
+  /// Метод для добавления комментария к задаче
+  Future<Comment> addingComment(String issueId, String commentText) async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.post(
+          '/issues/$issueId/comments',
+          data: {'text': commentText},
+        );
+        return Comment.fromJson(response.data as Map<String, dynamic>);
+      },
+      'добавление комментария',
+    );
+  }
+
+  /// Получение ID аватарки пользователя из Яндекс профиля
+  Future<String?> fetchUserAvatarId() async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get(
+          'https://login.yandex.ru/info?format=json',
+          options: Options(
+            headers: {
+              'Authorization': 'OAuth ${YandexAuthService.accessToken}',
+            },
+          ),
+        );
+        final map = response.data as Map<String, dynamic>;
+        final isEmpty = map['is_avatar_empty'] as bool? ?? false;
+        final avatarId = map['default_avatar_id'] as String?;
+        if (isEmpty || avatarId == null || avatarId.isEmpty) return null;
+        return avatarId;
+      },
+      'получение ID аватарки',
+    );
+  }
+
+  /// Запрос на получение списка задач по статусу "Можно тестировать"
   Future<List<Issue>> showIssues() async {
     return _executeRequest(
       () async {
@@ -199,6 +302,18 @@ class NewApiClient {
       },
       'получение задачи',
     );
+  }
+
+  Future<List<Comment>> fetchComments(String issueId) {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get('/issues/$issueId/comments');
+        final list = response.data as List<dynamic>;
+        return list
+              .map((item) => Comment.fromJson(item as Map<String, dynamic>))
+              .toList();
+      },
+      'получение комментариев');
   }
 
   void dispose() {
