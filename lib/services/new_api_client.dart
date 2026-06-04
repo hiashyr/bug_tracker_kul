@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:trying_flutter/models/issue.dart';
 import 'package:trying_flutter/models/user.dart';
 
 import '../services/api_exceptions.dart';
@@ -36,7 +37,6 @@ class NewApiClient {
           options.headers['Authorization'] =
               'OAuth ${YandexAuthService.accessToken}';
           options.headers['X-Cloud-Org-Id'] = _orgId;
-
           _logger.d(
             '🔵 Request: ${options.method} ${options.path}\n'
             '   Headers: ${options.headers}',
@@ -46,7 +46,9 @@ class NewApiClient {
         },
         onResponse: (response, handler) {
           _logger.d(
-            '🟢 Response: ${response.statusCode} ${response.requestOptions.path}',
+            '''🟢 Response: ${response.statusCode}
+            ${response.requestOptions.path}
+            ${response.data}''',
           );
           return handler.next(response);
         },
@@ -167,6 +169,35 @@ class NewApiClient {
             .toList();
       },
       'получение пользователей',
+    );
+  }
+
+  Future<List<Issue>> showIssues() async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.post(
+          '/issues/_search?expand=transitions',
+          data: {
+            'filter': {'queue': 'DEV', 'status': 'readyForTest'},
+            'order': '+status',
+          },
+        );
+        final list = response.data as List<dynamic>;
+        return list
+            .map((item) => Issue.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
+      'получение задач',
+    );
+  }
+
+  Future<Issue> fetchIssue(String issueId) async {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get('/issues/$issueId');
+        return Issue.fromJson(response.data as Map<String, dynamic>);
+      },
+      'получение задачи',
     );
   }
 
