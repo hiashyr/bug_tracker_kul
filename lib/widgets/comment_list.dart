@@ -101,6 +101,7 @@ class _CommentCard extends StatelessWidget {
                   child: Text(
                     comment.createdBy,
                     style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.greyDark,
                       fontWeight: FontWeight.w600,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -118,7 +119,9 @@ class _CommentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               comment.text,
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.surfaceDark,  // или AppColors.твойЦвет
+              ),
             ),
             if (comment.updatedAt != null &&
                 comment.updatedAt != comment.createdAt) ...[

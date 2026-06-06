@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trying_flutter/theme/app_theme.dart';
 import '../models/issue.dart';
 import '../models/status.dart';
 import '../theme/app_colors.dart';
@@ -322,7 +323,7 @@ class _StatusChip extends StatelessWidget {
             status,
             style: TextStyle(
               fontFamily: AppTypography.fontFamily,
-              color: Colors.white,
+              color: AppColors.greyDark,
             ),
           ),
           if (hasTransitions) ...[
@@ -330,7 +331,7 @@ class _StatusChip extends StatelessWidget {
             const Icon(
               Icons.arrow_drop_down,
               size: 18,
-              color: Colors.white,
+              color: AppColors.greyDark,
             ),
           ],
         ],
