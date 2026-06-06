@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/issue.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
-import '../services/error_helper.dart';
+import 'package:trying_flutter/services/error_helper.dart';
+import 'package:trying_flutter/theme/app_colors.dart';
+import 'package:trying_flutter/theme/app_typography.dart';
 
 class IssuesListScreen extends ConsumerWidget {
   const IssuesListScreen({super.key});
@@ -28,7 +30,7 @@ class IssuesListScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(getErrorIcon(error), color: Colors.red, size: 48),
+              Icon(getErrorIcon(error), color: AppColors.error, size: 48),
               const SizedBox(height: 16),
               Text(
                 getErrorMessage(error),
@@ -50,11 +52,11 @@ class IssuesListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox, size: 64, color: Colors.grey),
+                  Icon(Icons.inbox, size: 64, color: AppColors.greyMedium),
                   SizedBox(height: 16),
                   Text(
                     'Нет задач на тестировании',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(color: AppColors.greyMedium, fontSize: 16),
                   ),
                 ],
               ),
@@ -92,7 +94,7 @@ class IssuesListScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
+                      color: AppColors.brandBlueLight,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -100,7 +102,7 @@ class IssuesListScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade800,
+                        color: AppColors.brandBlue,
                       ),
                     ),
                   ),
@@ -110,7 +112,7 @@ class IssuesListScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Text(
                 issue.summary ?? 'Без названия',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                style: AppTypography.issueSummary,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -122,12 +124,12 @@ class IssuesListScreen extends ConsumerWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                        const Icon(Icons.person_outline, size: 14, color: AppColors.greyMedium),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             issue.createdBy,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: AppTypography.caption,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -136,11 +138,11 @@ class IssuesListScreen extends ConsumerWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                      const Icon(Icons.calendar_today, size: 12, color: AppColors.greyMedium),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(issue.createdAt),
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: AppTypography.caption,
                       ),
                     ],
                   ),
@@ -159,18 +161,18 @@ class IssuesListScreen extends ConsumerWidget {
       case 'готов к тестированию':
       case 'readyfortest':
       case 'ready for test':
-        color = Colors.orange;
+        color = AppColors.statusTesting;
         break;
       default:
-        color = Colors.grey;
+        color = AppColors.statusClosed;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         status,
@@ -188,28 +190,28 @@ class IssuesListScreen extends ConsumerWidget {
     switch (priority.toLowerCase()) {
       case 'critical':
       case 'критический':
-        color = Colors.red;
+        color = AppColors.priorityCritical;
         break;
       case 'high':
       case 'высокий':
-        color = Colors.orange;
+        color = AppColors.priorityHigh;
         break;
       case 'medium':
       case 'средний':
-        color = Colors.blue;
+        color = AppColors.priorityMedium;
         break;
       case 'low':
       case 'низкий':
-        color = Colors.green;
+        color = AppColors.priorityLow;
         break;
       default:
-        color = Colors.grey;
+        color = AppColors.greyMedium;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

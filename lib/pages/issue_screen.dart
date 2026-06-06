@@ -5,6 +5,7 @@ import '../models/status.dart';
 import '../providers/comment_provider.dart';
 import '../providers/issue_provider.dart';
 import '../providers/status_provider.dart';
+import '../theme/app_colors.dart';
 import '../widgets/comment_form.dart';
 import '../widgets/comment_list.dart';
 import '../widgets/issue_card.dart';
@@ -30,44 +31,46 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
 
     return Column(
         children: [
-          Expanded(
-            flex: 2,
+          // Блок карточки задачи
+          Center(
             child: issueAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, _) => Center(
-                child: Text('Ошибка: $error'),
-              ),
-              data: (issue) {
-                final availableStatuses = statusesAsync.whenOrNull(
-                  data: (statuses) => statuses,
-                );
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, _) => Center(
+                  child: Text('Ошибка: $error'),
+                ),
+                data: (issue) {
+                  final availableStatuses = statusesAsync.whenOrNull(
+                    data: (statuses) => statuses,
+                  );
 
-                return SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      IssueCard(
-                        issue: issue,
-                        onRefresh: _refreshIssueSection,
-                        onTransitionToTesting: _showQaEngineerSelector,
-                        availableStatuses: availableStatuses,
-                        onStatusSelected: _handleStatusTransition,
-                      ),
-                      if (_showQaSelector)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: QaEngineerSelector(
-                            issueId: widget.issueId,
-                            onTransitionComplete: _handleQaTransitionComplete,
-                          ),
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        IssueCard(
+                          issue: issue,
+                          onRefresh: _refreshIssueSection,
+                          onTransitionToTesting: _showQaEngineerSelector,
+                          availableStatuses: availableStatuses,
+                          onStatusSelected: _handleStatusTransition,
                         ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                        if (_showQaSelector)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: QaEngineerSelector(
+                              issueId: widget.issueId,
+                              onTransitionComplete: _handleQaTransitionComplete,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
           ),
+
+          // Блок комментариев - занимает всю доступную ширину
           Expanded(
             flex: 3,
             child: commentsAsync.when(
@@ -86,18 +89,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
           CommentForm(issueId: widget.issueId),
         ],
     );
-  }
-
-  Future<void> _refreshAll() async {
-    ref.invalidate(issueProvider(widget.issueId));
-    ref.invalidate(commentsProvider(widget.issueId));
-    ref.invalidate(statusesProvider(widget.issueId));
-
-    if (_showQaSelector) {
-      setState(() {
-        _showQaSelector = false;
-      });
-    }
   }
 
   Future<void> _refreshIssueSection() async {
@@ -161,7 +152,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Статус изменен на "${selectedStatus.display}"'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
     } catch (e) {
@@ -171,7 +162,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     }

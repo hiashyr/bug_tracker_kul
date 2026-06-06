@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../providers/status_provider.dart';
 import '../providers/user_provider.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class QaEngineerSelector extends ConsumerStatefulWidget {
   final String issueId;
@@ -29,16 +31,16 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: AppColors.warningLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.person_add, size: 18, color: Colors.orange),
+              Icon(Icons.person_add, size: 18, color: AppColors.warning),
               SizedBox(width: 8),
               Text(
                 'Перевод на тестирование',
@@ -57,7 +59,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
             ),
             error: (error, _) => Text(
               'Ошибка загрузки пользователей: $error',
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: TextStyle(color: AppColors.error, fontSize: 12),
             ),
             data: (users) => _buildContent(context, users),
           ),
@@ -70,7 +72,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
     if (users.isEmpty) {
       return const Text(
         'Нет доступных QA инженеров',
-        style: TextStyle(color: Colors.grey),
+        style: TextStyle(color: AppColors.greyMedium),
       );
     }
 
@@ -107,8 +109,8 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
             onPressed:
                 _isLoading || _selectedEngineer == null ? null : _performTransition,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.warning,
+              foregroundColor: AppColors.textOnBrand,
             ),
             child: _isLoading
                 ? const SizedBox(
@@ -116,7 +118,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: AppColors.textOnBrand,
                     ),
                   )
                 : const Text('Перевести на тестирование'),
@@ -147,7 +149,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Задача переведена на тестирование'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
 
@@ -158,7 +160,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
     } finally {
@@ -184,15 +186,14 @@ class _UserMenuItem extends StatelessWidget {
         children: [
           Text(
             user.display,
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: AppTypography.issueSummary,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             user.login,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
+            style: AppTypography.chipText.copyWith(
+              color: AppColors.greyMedium,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class UnauthorizedView extends StatelessWidget {
   const UnauthorizedView({
@@ -13,19 +14,19 @@ class UnauthorizedView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Задачи на тестирование'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.brandBlue,
+        foregroundColor: AppColors.textOnBrand,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+            const Icon(Icons.lock_outline, size: 64, color: AppColors.greyMedium),
             const SizedBox(height: 16),
             const Text(
               'Для просмотра задач нужно войти через Яндекс',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: AppColors.greyMedium, fontSize: 16),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/comment_provider.dart';
+import '../theme/app_colors.dart';
 
 class CommentForm extends ConsumerStatefulWidget {
   final String issueId;
@@ -70,8 +71,8 @@ class _CommentFormState extends ConsumerState<CommentForm> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        color: AppColors.brandBlueLight,
+        border: Border(top: BorderSide(color: AppColors.greyLight)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -79,9 +80,9 @@ class _CommentFormState extends ConsumerState<CommentForm> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.greyLight),
               ),
               child: TextField(
                 controller: _controller,
@@ -106,15 +107,18 @@ class _CommentFormState extends ConsumerState<CommentForm> {
           IconButton(
             onPressed: _isSubmitting ? null : _sendComment,
             style: IconButton.styleFrom(
-              backgroundColor: Colors.blueAccent.shade100,
+              backgroundColor: AppColors.brandBlue,
             ),
             icon: _isSubmitting
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.textOnBrand,
+                    ),
                   )
-                : const Icon(Icons.send),
+                : const Icon(Icons.send, color: AppColors.textOnBrand),
           ),
         ],
       ),

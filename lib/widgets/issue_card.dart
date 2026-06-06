@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/issue.dart';
 import '../models/status.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class IssueCard extends StatelessWidget {
   final Issue issue;
@@ -69,10 +71,7 @@ class IssueHeader extends StatelessWidget {
       children: [
         Text(
           issue.id,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTypography.issueId,
         ),
         _StatusChip(
           status: issue.status,
@@ -131,16 +130,16 @@ class IssueHeader extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'открыт':
       case 'open':
-        return Colors.green;
+        return AppColors.statusOpen;
       case 'в работе':
       case 'in progress':
-        return Colors.blue;
+        return AppColors.statusInProgress;
       case 'на тестировании':
       case 'testing':
-        return Colors.orange;
+        return AppColors.statusTesting;
       case 'закрыт':
       case 'closed':
-        return Colors.grey;
+        return AppColors.statusClosed;
       default:
         return Colors.purple;
     }
@@ -177,19 +176,22 @@ class IssueDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _LabelText('Приоритет:'),
-        Text(issue.priority),
+        Text(
+          issue.priority,
+          style: AppTypography.issueDescription,
+        ),
         const SizedBox(height: 12),
         const _LabelText('Название:'),
         Text(
           issue.summary ?? 'Нет названия',
-          style: const TextStyle(fontSize: 16),
+          style: AppTypography.issueSummary,
         ),
         const SizedBox(height: 12),
         if (issue.description != null) ...[
           const _LabelText('Описание:'),
           Text(
             issue.description!,
-            style: const TextStyle(fontSize: 14),
+            style: AppTypography.issueDescription,
           ),
           const SizedBox(height: 12),
         ],
@@ -197,11 +199,11 @@ class IssueDetails extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Создал: ${issue.createdBy}',
-          style: const TextStyle(color: Colors.grey),
+          style: AppTypography.caption,
         ),
         Text(
           'Дата: ${_formatDate(issue.createdAt)}',
-          style: const TextStyle(color: Colors.grey),
+          style: AppTypography.caption,
         ),
       ],
     );
@@ -226,10 +228,7 @@ class _LabelText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-      ),
+      style: AppTypography.label,
     );
   }
 }
@@ -261,8 +260,8 @@ class IssueActions extends StatelessWidget {
               icon: const Icon(Icons.play_arrow, size: 18),
               label: const Text('Перевести на тестирование'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.warning,
+                foregroundColor: AppColors.textOnBrand,
               ),
             ),
           ),
@@ -305,7 +304,7 @@ class _StatusChip extends StatelessWidget {
         boxShadow: hasTransitions
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
