@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/user.dart';
 import 'package:trying_flutter/providers/user_provider.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_typography.dart';
 
 class ShellScaffold extends ConsumerWidget {
   final Widget child;
@@ -95,7 +96,11 @@ class _UserAvatarWithLogout extends StatelessWidget {
             child: avatarUrl == null
                 ? Text(
                     user.display.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   )
                 : null,
           ),

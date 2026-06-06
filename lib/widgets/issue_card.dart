@@ -101,7 +101,11 @@ class IssueHeader extends StatelessWidget {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Изменить статус',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const Divider(height: 1),
@@ -141,7 +145,7 @@ class IssueHeader extends StatelessWidget {
       case 'closed':
         return AppColors.statusClosed;
       default:
-        return Colors.purple;
+        return AppColors.statusTesting;
     }
   }
 
@@ -316,7 +320,10 @@ class _StatusChip extends StatelessWidget {
         children: [
           Text(
             status,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              color: Colors.white,
+            ),
           ),
           if (hasTransitions) ...[
             const SizedBox(width: 4),

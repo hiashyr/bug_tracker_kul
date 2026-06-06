@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class UnauthorizedView extends StatelessWidget {
   const UnauthorizedView({
@@ -23,10 +24,14 @@ class UnauthorizedView extends StatelessWidget {
           children: [
             const Icon(Icons.lock_outline, size: 64, color: AppColors.greyMedium),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Для просмотра задач нужно войти через Яндекс',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.greyMedium, fontSize: 16),
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                color: AppColors.greyMedium,
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

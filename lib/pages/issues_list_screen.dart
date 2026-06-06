@@ -48,15 +48,19 @@ class IssuesListScreen extends ConsumerWidget {
         ),
         data: (issues) {
           if (issues.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox, size: 64, color: AppColors.greyMedium),
-                  SizedBox(height: 16),
+                  const Icon(Icons.inbox, size: 64, color: AppColors.greyMedium),
+                  const SizedBox(height: 16),
                   Text(
                     'Нет задач на тестировании',
-                    style: TextStyle(color: AppColors.greyMedium, fontSize: 16),
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      color: AppColors.greyMedium,
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
@@ -100,6 +104,7 @@ class IssuesListScreen extends ConsumerWidget {
                     child: Text(
                       issue.id,
                       style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppColors.brandBlue,
@@ -177,6 +182,7 @@ class IssuesListScreen extends ConsumerWidget {
       child: Text(
         status,
         style: TextStyle(
+          fontFamily: AppTypography.fontFamily,
           fontSize: 11,
           color: color,
           fontWeight: FontWeight.w500,
@@ -217,6 +223,7 @@ class IssuesListScreen extends ConsumerWidget {
       child: Text(
         priority,
         style: TextStyle(
+          fontFamily: AppTypography.fontFamily,
           fontSize: 10,
           color: color,
           fontWeight: FontWeight.w500,

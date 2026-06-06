@@ -44,7 +44,8 @@ class AppTheme {
           foregroundColor: AppColors.textOnBrand,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: TextStyle(
+          titleTextStyle: const TextStyle(
+            fontFamily: AppTypography.fontFamily,
             color: AppColors.textOnBrand,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -71,7 +72,8 @@ class AppTheme {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
+              fontFamily: AppTypography.fontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -82,7 +84,8 @@ class AppTheme {
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             foregroundColor: AppColors.brandBlue,
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
+              fontFamily: AppTypography.fontFamily,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -99,7 +102,8 @@ class AppTheme {
         // ── SnackBar ──
         snackBarTheme: SnackBarThemeData(
           backgroundColor: AppColors.greyDark,
-          contentTextStyle: const TextStyle(
+          contentTextStyle: TextStyle(
+            fontFamily: AppTypography.fontFamily,
             color: AppColors.textPrimaryDark,
             fontSize: 14,
           ),

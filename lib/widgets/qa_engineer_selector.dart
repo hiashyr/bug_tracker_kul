@@ -45,6 +45,7 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
               Text(
                 'Перевод на тестирование',
                 style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -59,7 +60,11 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
             ),
             error: (error, _) => Text(
               'Ошибка загрузки пользователей: $error',
-              style: TextStyle(color: AppColors.error, fontSize: 12),
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                color: AppColors.error,
+                fontSize: 12,
+              ),
             ),
             data: (users) => _buildContent(context, users),
           ),
@@ -70,9 +75,12 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
 
   Widget _buildContent(BuildContext context, List<User> users) {
     if (users.isEmpty) {
-      return const Text(
+      return Text(
         'Нет доступных QA инженеров',
-        style: TextStyle(color: AppColors.greyMedium),
+        style: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          color: AppColors.greyMedium,
+        ),
       );
     }
 
