@@ -71,7 +71,7 @@ class IssueHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          issue.id,
+          issue.key,
           style: AppTypography.issueId,
         ),
         _StatusChip(
@@ -270,17 +270,6 @@ class IssueActions extends StatelessWidget {
               ),
             ),
           ),
-        if (onRefresh != null) ...[
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Обновить'),
-            ),
-          ),
-        ],
       ],
     );
   }

@@ -5,7 +5,7 @@ part 'issue.g.dart';
 @JsonSerializable()
 class Issue {
   final String id;
-  final String self;
+  final String key;
   final String? summary;
   final String? description;
   
@@ -26,7 +26,7 @@ class Issue {
 
   Issue({
     required this.id,
-    required this.self,
+    required this.key,
     required this.summary,
     this.description,
     required this.status,

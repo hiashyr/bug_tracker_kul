@@ -26,12 +26,6 @@ class CommentList extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            if (onRefresh != null)
-              TextButton.icon(
-                onPressed: onRefresh,
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Обновить'),
-              ),
           ],
         ),
         const SizedBox(height: 8),

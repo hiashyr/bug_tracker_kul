@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trying_flutter/theme/app_colors.dart';
 
 /// Стили текста для приложения Bug Tracker
 class AppTypography {
@@ -114,6 +115,7 @@ class AppTypography {
     fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w500,
+    color: AppColors.surfaceDark,
   );
 
   /// Стиль для описания задачи

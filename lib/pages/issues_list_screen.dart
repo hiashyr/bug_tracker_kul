@@ -102,7 +102,7 @@ class IssuesListScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      issue.id,
+                      issue.key,
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
                         fontSize: 12,
@@ -163,10 +163,25 @@ class IssuesListScreen extends ConsumerWidget {
   Widget _buildStatusChip(String status) {
     Color color;
     switch (status.toLowerCase()) {
+      case 'открыт':
+      case 'open':
+        color = AppColors.statusOpen;
+        break;
+      case 'в работе':
+      case 'in progress':
+        color = AppColors.statusInProgress;
+        break;
+      case 'на тестировании':
+      case 'testing':
       case 'готов к тестированию':
       case 'readyfortest':
       case 'ready for test':
+      case 'можно тестировать':
         color = AppColors.statusTesting;
+        break;
+      case 'закрыт':
+      case 'closed':
+        color = AppColors.statusClosed;
         break;
       default:
         color = AppColors.statusClosed;
@@ -175,16 +190,16 @@ class IssuesListScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         status,
         style: TextStyle(
-          fontFamily: AppTypography.fontFamily,
+              fontFamily: AppTypography.fontFamily,
+              color: AppColors.greyDark,
           fontSize: 11,
-          color: color,
           fontWeight: FontWeight.w500,
         ),
       ),

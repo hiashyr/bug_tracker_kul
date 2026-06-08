@@ -8,7 +8,7 @@ part of 'issue.dart';
 
 Issue _$IssueFromJson(Map<String, dynamic> json) => Issue(
   id: json['id'] as String,
-  self: json['self'] as String,
+  key: json['key'] as String,
   summary: json['summary'] as String?,
   description: json['description'] as String?,
   status: Issue._extractDisplay(json['status'] as Map<String, dynamic>?),
@@ -25,7 +25,7 @@ Issue _$IssueFromJson(Map<String, dynamic> json) => Issue(
 
 Map<String, dynamic> _$IssueToJson(Issue instance) => <String, dynamic>{
   'id': instance.id,
-  'self': instance.self,
+  'key': instance.key,
   'summary': instance.summary,
   'description': instance.description,
   'status': Issue._wrapDisplay(instance.status),
