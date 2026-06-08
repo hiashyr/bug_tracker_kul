@@ -8,6 +8,7 @@ class IssueCard extends StatelessWidget {
   final Issue issue;
   final VoidCallback? onRefresh;
   final VoidCallback? onTransitionToTesting;
+  final VoidCallback? onFixRequested;
   final List<Status>? availableStatuses;
   final ValueChanged<Status>? onStatusSelected;
 
@@ -16,6 +17,7 @@ class IssueCard extends StatelessWidget {
     required this.issue,
     this.onRefresh,
     this.onTransitionToTesting,
+    this.onFixRequested,
     this.availableStatuses,
     this.onStatusSelected,
   });
@@ -41,6 +43,7 @@ class IssueCard extends StatelessWidget {
               issue: issue,
               onTransitionToTesting: onTransitionToTesting,
               onRefresh: onRefresh,
+              onFixRequested: onFixRequested,
               availableStatuses: availableStatuses,
               onStatusSelected: onStatusSelected,
             ),
@@ -255,6 +258,7 @@ class IssueActions extends StatelessWidget {
   final Issue issue;
   final VoidCallback? onTransitionToTesting;
   final VoidCallback? onRefresh;
+  final VoidCallback? onFixRequested;
   final List<Status>? availableStatuses;
   final ValueChanged<Status>? onStatusSelected;
 
@@ -263,6 +267,7 @@ class IssueActions extends StatelessWidget {
     required this.issue,
     this.onTransitionToTesting,
     this.onRefresh,
+    this.onFixRequested,
     this.availableStatuses,
     this.onStatusSelected,
   });
@@ -285,7 +290,13 @@ class IssueActions extends StatelessWidget {
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () => onStatusSelected?.call(status),
+            onPressed: () {
+              if (display == 'Исправить') {
+                onFixRequested?.call();
+              } else {
+                onStatusSelected?.call(status);
+              }
+            },
             icon: Icon(
               _iconForStatus(display),
               size: 18,

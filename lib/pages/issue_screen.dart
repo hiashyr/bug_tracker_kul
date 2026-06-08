@@ -8,6 +8,7 @@ import '../providers/status_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/comment_form.dart';
 import '../widgets/comment_list.dart';
+import '../widgets/fix_comment_dialog.dart';
 import '../widgets/issue_card.dart';
 import '../widgets/qa_engineer_selector.dart';
 
@@ -22,6 +23,13 @@ class IssueScreen extends ConsumerStatefulWidget {
 
 class _IssueScreenState extends ConsumerState<IssueScreen> {
   bool _showQaSelector = false;
+
+  Future<void> _showFixCommentDialog() async {
+    await showDialog<List<Map<String, dynamic>>>(
+      context: context,
+      builder: (_) => const FixCommentDialog(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +60,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           issue: issue,
                           onRefresh: _refreshIssueSection,
                           onTransitionToTesting: _showQaEngineerSelector,
+                          onFixRequested: _showFixCommentDialog,
                           availableStatuses: availableStatuses,
                           onStatusSelected: _handleStatusTransition,
                         ),
