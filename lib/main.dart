@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
       title: 'Yandex Tracker Client',
       theme: AppTheme.light,
       routerConfig: appRouter,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

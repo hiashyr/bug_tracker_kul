@@ -20,7 +20,7 @@ void main() {
       final issue = Issue.fromJson(json);
 
       expect(issue.id, 'DEV-123');
-      expect(issue.self, 'https://api.tracker.yandex.net/v3/issues/DEV-123');
+      expect(issue.key, 'https://api.tracker.yandex.net/v3/issues/DEV-123');
       expect(issue.summary, 'Тестовая задача');
       expect(issue.description, 'Описание задачи');
       expect(issue.status, 'Открыт');

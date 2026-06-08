@@ -70,9 +70,14 @@ class IssueHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+          Text(
           issue.key,
-          style: AppTypography.issueId,
+          style: TextStyle(
+            fontFamily: AppTypography.issueId.fontFamily,
+            fontWeight: FontWeight.bold,
+            color: AppColors.brandBlue,
+            fontSize: 25,
+          ),
         ),
         _StatusChip(
           status: issue.status,
@@ -232,9 +237,14 @@ class _LabelText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      text,
-      style: AppTypography.label,
-    );
+          text,
+          style: TextStyle(
+            fontFamily: AppTypography.fontFamily,
+            fontWeight: FontWeight.bold,
+            color: AppColors.brandBlue,
+            fontSize: 15,
+          ),
+        );
   }
 }
 

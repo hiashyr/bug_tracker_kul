@@ -279,9 +279,9 @@ class NewApiClient {
     return _executeRequest(
       () async {
         final response = await _dio.post(
-          '/issues/_search?expand=transitions',
+          '/issues/_search?',
           data: {
-            'filter': {'queue': 'DEV', 'status': 'readyForTest'},
+            'query': "Resolution: empty() \"Status Type\": !cancelled \"Status Type\": !done Status: readyForTest, testing \"Sort by\": Updated DESC",
             'order': '+status',
           },
         );
