@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trying_flutter/theme/app_theme.dart';
 import '../models/issue.dart';
 import '../models/status.dart';
 import '../theme/app_colors.dart';
@@ -42,6 +41,8 @@ class IssueCard extends StatelessWidget {
               issue: issue,
               onTransitionToTesting: onTransitionToTesting,
               onRefresh: onRefresh,
+              availableStatuses: availableStatuses,
+              onStatusSelected: onStatusSelected,
             ),
           ],
         ),
@@ -65,7 +66,9 @@ class IssueHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasTransitions =
-        availableStatuses != null && availableStatuses!.isNotEmpty;
+        issue.status != 'Тестируется' &&
+        availableStatuses != null &&
+        availableStatuses!.isNotEmpty;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -252,22 +255,61 @@ class IssueActions extends StatelessWidget {
   final Issue issue;
   final VoidCallback? onTransitionToTesting;
   final VoidCallback? onRefresh;
+  final List<Status>? availableStatuses;
+  final ValueChanged<Status>? onStatusSelected;
 
   const IssueActions({
     super.key,
     required this.issue,
     this.onTransitionToTesting,
     this.onRefresh,
+    this.availableStatuses,
+    this.onStatusSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isTesting = issue.status.toLowerCase() == 'testing' ||
-        issue.status.toLowerCase() == 'на тестировании';
+    if (issue.status == 'Тестируется' && availableStatuses != null) {
+      final targetDisplays = [
+        'Требуется информация',
+        'Исправить',
+        'Протестировано',
+      ];
 
-    return Column(
-      children: [
-        if (!isTesting && onTransitionToTesting != null)
+      final buttons = targetDisplays.map((display) {
+        final status = availableStatuses!.firstWhere(
+          (s) => s.display == display,
+          orElse: () => Status(id: display, display: display),
+        );
+
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => onStatusSelected?.call(status),
+            icon: Icon(
+              _iconForStatus(display),
+              size: 18,
+            ),
+            label: Text(display),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _colorForStatus(display),
+              foregroundColor: AppColors.textOnBrand,
+            ),
+          ),
+        );
+      }).toList();
+
+      return Column(
+        children: [
+          const SizedBox(height: 8),
+          ...buttons,
+        ].expand((w) => [w, const SizedBox(height: 8)]).toList()..removeLast(),
+      );
+    }
+
+    if (issue.status == 'Можно тестировать' && onTransitionToTesting != null) {
+      return Column(
+        children: [
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -280,8 +322,37 @@ class IssueActions extends StatelessWidget {
               ),
             ),
           ),
-      ],
-    );
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Color _colorForStatus(String display) {
+    switch (display) {
+      case 'Требуется информация':
+        return AppColors.warning;
+      case 'Исправить':
+        return AppColors.error;
+      case 'Протестировано':
+        return AppColors.success;
+      default:
+        return AppColors.warning;
+    }
+  }
+
+  IconData _iconForStatus(String display) {
+    switch (display) {
+      case 'Требуется информация':
+        return Icons.help_outline;
+      case 'Исправить':
+        return Icons.bug_report;
+      case 'Протестировано':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.arrow_forward;
+    }
   }
 }
 
