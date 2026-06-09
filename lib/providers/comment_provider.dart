@@ -27,3 +27,16 @@ final addCommentProvider = Provider((ref) {
     return newComment;
   };
 });
+
+final addErrorCommentProvider = Provider((ref) {
+  return (String commentText) async {
+  final isAuthorized = ref.watch(isAuthorizedProvider);
+  if (!isAuthorized) {
+    throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
+  }
+
+    final apiClient = ref.read(newApiClientProvider);
+    final newComment = await apiClient.addingErrorComment(commentText);
+    return newComment;
+  };
+});

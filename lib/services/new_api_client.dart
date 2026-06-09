@@ -252,6 +252,22 @@ class NewApiClient {
     );
   }
 
+  /// Метод для добавления комментария с описанием ошибки к задаче
+  Future<Comment> addingErrorComment(String commentText) async {
+    final String errorIssueId = "DEV-6";
+    return _executeRequest(
+      () async {
+        final response = await _dio.post(
+          '/issues/$errorIssueId/comments',
+          data: {'text': commentText},
+        );
+        return Comment.fromJson(response.data as Map<String, dynamic>);
+      },
+      'добавление описания ошибки',
+    );
+  }
+
+
   /// Получение ID аватарки пользователя из Яндекс профиля
   Future<String?> fetchUserAvatarId() async {
     return _executeRequest(

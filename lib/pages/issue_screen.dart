@@ -25,7 +25,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   bool _showQaSelector = false;
 
   Future<void> _showFixCommentDialog() async {
-    await showDialog<List<Map<String, dynamic>>>(
+    await showDialog(
       context: context,
       builder: (_) => const FixCommentDialog(),
     );
@@ -129,6 +129,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     _refreshIssueSection();
     _hideQaEngineerSelector();
   }
+
+
 
   Future<void> _handleStatusTransition(Status selectedStatus) async {
     if (selectedStatus.id == 'testing') {

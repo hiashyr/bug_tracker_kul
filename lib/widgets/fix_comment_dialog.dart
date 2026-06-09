@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:markdown_quill/markdown_quill.dart';
+import '../providers/comment_provider.dart';
 import '../theme/app_colors.dart';
 
-class FixCommentDialog extends StatefulWidget {
+class FixCommentDialog extends ConsumerStatefulWidget {
   const FixCommentDialog({super.key});
 
   @override
-  State<FixCommentDialog> createState() => _FixCommentDialogState();
+  ConsumerState<FixCommentDialog> createState() => _FixCommentDialogState();
 }
 
-class _FixCommentDialogState extends State<FixCommentDialog> {
+class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
   late final QuillController _quillController;
 
   @override
@@ -26,10 +28,11 @@ class _FixCommentDialogState extends State<FixCommentDialog> {
   }
 
   void _submit() {
-    final Delta delta = _quillController.document.toDelta();
-    final List<Map<String, dynamic>> deltaJson = delta.toJson();
+    final delta = _quillController.document.toDelta();
+    final markdown = DeltaToMarkdown().convert(delta);
 
-    Navigator.of(context).pop(deltaJson);
+    ref.read(addErrorCommentProvider)(markdown);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -101,7 +104,7 @@ class _FixCommentDialogState extends State<FixCommentDialog> {
                   foregroundColor: AppColors.textOnBrand,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Отправить комментарий'),
+                child: const Text('Отправить описание ошибки'),
               ),
             ),
           ],
