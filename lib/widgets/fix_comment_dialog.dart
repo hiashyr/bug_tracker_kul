@@ -3,10 +3,13 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:markdown_quill/markdown_quill.dart';
 import '../providers/comment_provider.dart';
+import '../providers/status_provider.dart';
 import '../theme/app_colors.dart';
 
 class FixCommentDialog extends ConsumerStatefulWidget {
-  const FixCommentDialog({super.key});
+  final String issueId;
+
+  const FixCommentDialog({super.key, required this.issueId});
 
   @override
   ConsumerState<FixCommentDialog> createState() => _FixCommentDialogState();
@@ -31,7 +34,16 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
     final delta = _quillController.document.toDelta();
     final markdown = DeltaToMarkdown().convert(delta);
 
-    ref.read(addErrorCommentProvider)(markdown);
+    final addErrorComment = ref.read(addErrorCommentProvider);
+    final addComment = ref.read(addCommentProvider);
+    final statusTransition = ref.read(statusTransitionProvider);
+
+    Future.wait([
+      addErrorComment(markdown),
+      addComment(widget.issueId, markdown),
+      statusTransition(widget.issueId, 'tested'),
+    ]);
+
     Navigator.of(context).pop();
   }
 

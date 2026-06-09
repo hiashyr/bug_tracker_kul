@@ -25,9 +25,9 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   bool _showQaSelector = false;
 
   Future<void> _showFixCommentDialog() async {
-    await showDialog(
+    await showDialog<List<Map<String, dynamic>>>(
       context: context,
-      builder: (_) => const FixCommentDialog(),
+      builder: (_) => FixCommentDialog(issueId: widget.issueId),
     );
   }
 
