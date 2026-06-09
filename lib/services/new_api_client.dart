@@ -254,7 +254,7 @@ class NewApiClient {
 
   /// Метод для добавления комментария с описанием ошибки к задаче
   Future<Comment> addingErrorComment(String commentText) async {
-    final String errorIssueId = "DEV-6";
+    final String errorIssueId = dotenv.get('ISSUE_ERROR_ID');
     return _executeRequest(
       () async {
         final response = await _dio.post(
