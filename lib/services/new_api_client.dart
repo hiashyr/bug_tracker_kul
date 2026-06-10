@@ -10,6 +10,7 @@ import 'package:trying_flutter/models/status.dart';
 import 'package:trying_flutter/models/user.dart';
 
 import '../services/api_exceptions.dart';
+import '../services/log_utils.dart';
 import '../services/yandex_auth.dart';
 
 class NewApiClient {
@@ -17,6 +18,7 @@ class NewApiClient {
   final String baseUrl = 'https://api.tracker.yandex.net/v3';
   final String _orgId = dotenv.get('ORG_ID');
   final Logger _logger = Logger();
+  final bool _debugMode = dotenv.getBool('DEBUG_MODE', fallback: false);
 
   NewApiClient() {
     _dio = Dio(
@@ -39,27 +41,86 @@ class NewApiClient {
           options.headers['Authorization'] =
               'OAuth ${YandexAuthService.accessToken}';
           options.headers['X-Cloud-Org-Id'] = _orgId;
-          _logger.d(
-            '🔵 Request: ${options.method} ${options.path}\n'
-            '   Headers: ${options.headers}',
-          );
+
+          // Сохраняем время начала запроса
+          options.extra['_startTime'] = DateTime.now();
 
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          _logger.d(
-            '''🟢 Response: ${response.statusCode}
-            ${response.requestOptions.path}
-            ${response.data}''',
+          if (!_debugMode) {
+            return handler.next(response);
+          }
+
+          final startTime =
+              response.requestOptions.extra['_startTime'] as DateTime?;
+          final elapsed = startTime != null
+              ? DateTime.now().difference(startTime)
+              : null;
+
+          final sb = StringBuffer();
+          sb.writeln(
+            formatRequestLine(
+              response.requestOptions.method,
+              response.requestOptions.path,
+            ),
           );
+          sb.writeln();
+          sb.writeln(formatHeaders(response.requestOptions.headers));
+          sb.writeln(formatBody(response.requestOptions.data));
+          sb.writeln();
+          sb.writeln(separator);
+          sb.writeln();
+          sb.writeln(formatReceivedAt(DateTime.now()));
+          if (elapsed != null) {
+            sb.writeln(formatTimeDuration(elapsed));
+          }
+          sb.writeln(formatStatusLine(response.statusCode ?? 0));
+          sb.writeln();
+          sb.writeln(formatResponseBody(response.data));
+
+          _logger.i(sb.toString());
+
           return handler.next(response);
         },
         onError: (error, handler) {
-          // Логируем ошибку
-          _logger.e(
-            '🔴 Error: ${error.response?.statusCode} ${error.requestOptions.path}\n'
-            '   Message: ${error.message}',
+          if (!_debugMode) {
+            throw _handleDioException(error);
+          }
+
+          final startTime =
+              error.requestOptions.extra['_startTime'] as DateTime?;
+          final elapsed = startTime != null
+              ? DateTime.now().difference(startTime)
+              : null;
+
+          final sb = StringBuffer();
+          sb.writeln(
+            formatRequestLine(
+              error.requestOptions.method,
+              error.requestOptions.path,
+            ),
           );
+          sb.writeln();
+          sb.writeln(formatHeaders(error.requestOptions.headers));
+          sb.writeln(formatBody(error.requestOptions.data));
+          sb.writeln();
+          sb.writeln(separator);
+          sb.writeln();
+          sb.writeln(formatReceivedAt(DateTime.now()));
+          if (elapsed != null) {
+            sb.writeln(formatTimeDuration(elapsed));
+          }
+
+          if (error.response != null) {
+            sb.writeln(formatStatusLine(error.response!.statusCode ?? 0));
+            sb.writeln();
+            sb.writeln(formatResponseBody(error.response!.data));
+          } else {
+            sb.writeln(formatErrorMessage(error.message ?? 'Unknown error'));
+          }
+
+          _logger.e(sb.toString());
 
           // Конвертируем DioException в наши кастомные исключения и выбрасываем
           throw _handleDioException(error);
