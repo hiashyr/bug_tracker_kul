@@ -49,6 +49,7 @@ dependencies:
   dio: ^5.9.2
 
   markdown_quill: ^4.3.0
+  flutter_markdown_plus: ^1.0.7
   flutter_quill: ^11.5.1
   flutter_quill_extensions: ^11.0.0
   flutter_localizations:

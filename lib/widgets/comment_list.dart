@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:trying_flutter/theme/app_typography.dart';
 import '../models/comment.dart';
 import '../theme/app_colors.dart';
 
@@ -111,12 +113,12 @@ class _CommentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              comment.text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.surfaceDark,  // или AppColors.твойЦвет
+              MarkdownBody(
+                data: comment.text,
+                styleSheet: MarkdownStyleSheet(
+                  p: AppTypography.issueDescription,
+                ),
               ),
-            ),
             if (comment.updatedAt != null &&
                 comment.updatedAt != comment.createdAt) ...[
               const SizedBox(height: 6),

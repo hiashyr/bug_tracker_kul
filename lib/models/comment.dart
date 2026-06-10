@@ -4,7 +4,7 @@ part 'comment.g.dart';
 
 @JsonSerializable()
 class Comment {
-  final String id;
+  final int id;
   final String text;
   final DateTime createdAt;
   

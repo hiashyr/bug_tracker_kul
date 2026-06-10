@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:trying_flutter/models/comment.dart';
 import 'package:trying_flutter/providers/comment_provider.dart';
 import 'package:trying_flutter/services/error_helper.dart';
@@ -14,7 +14,7 @@ class ErrorDescriptionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
 
-    final String errorcommentId = dotenv.get('comment_ERROR_ID');
+    final String errorcommentId = dotenv.get('ISSUE_ERROR_ID');
 
     final errorcommentComments = ref.watch(commentsProvider(errorcommentId));
 
@@ -108,16 +108,17 @@ class ErrorDescriptionScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                comment.id,
+                comment.id.toString(),
                 style: AppTypography.issueId,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
-              Text(
-                comment.text,
-                style: AppTypography.issueDescription,
-                overflow: TextOverflow.ellipsis,
+              MarkdownBody(
+                data: comment.text,
+                styleSheet: MarkdownStyleSheet(
+                  p: AppTypography.issueDescription,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
