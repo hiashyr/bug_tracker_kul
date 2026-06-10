@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:trying_flutter/pages/error_description_screen.dart';
 import 'package:trying_flutter/pages/issue_screen.dart';
 import 'package:trying_flutter/pages/issues_list_screen.dart';
 import 'package:trying_flutter/widgets/auth_guard.dart';
@@ -32,6 +33,11 @@ final GoRouter appRouter = GoRouter(
                   builder: (context, state) => IssueScreen(
                     issueId: state.pathParameters['issueId']!,
                   ),
+                ),
+                GoRoute(
+                  path: 'error_description_page',
+                  name: 'error-description-page',
+                  builder: (context, state) => ErrorDescriptionScreen(),
                 ),
               ],
             ),

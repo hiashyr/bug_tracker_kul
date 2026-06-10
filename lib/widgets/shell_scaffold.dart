@@ -19,6 +19,7 @@ class ShellScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserAsync = ref.watch(currentUserProvider);
+    final currentPath = GoRouterState.of(context).fullPath;
 
     return Scaffold(
       appBar: AppBar(
@@ -27,6 +28,19 @@ class ShellScaffold extends ConsumerWidget {
             ? BackButton(onPressed: () => GoRouter.of(context).pop())
             : null,
         actions: [
+          // Навигационная кнопка между главной и страницей описания ошибки
+          if (currentPath == '/')
+            IconButton(
+              icon: const Icon(Icons.bug_report, color: Colors.white),
+              tooltip: 'Описание ошибки',
+              onPressed: () => context.go('/error_description_page'),
+            )
+          else if (currentPath == '/error_description_page')
+            IconButton(
+              icon: const Icon(Icons.home, color: Colors.white),
+              tooltip: 'На главную',
+              onPressed: () => context.go('/'),
+            ),
           currentUserAsync.when(
             data: (user) {
               if (user == null) return const _DefaultAvatar();

@@ -7,6 +7,7 @@ part of 'comment.dart';
 // **************************************************************************
 
 Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
+  id: json['id'] as String,
   text: json['text'] as String,
   createdAt: DateTime.parse(json['createdAt'] as String),
   createdBy: Comment._extractDisplay(
@@ -21,6 +22,7 @@ Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
 );
 
 Map<String, dynamic> _$CommentToJson(Comment instance) => <String, dynamic>{
+  'id': instance.id,
   'text': instance.text,
   'createdAt': instance.createdAt.toIso8601String(),
   'createdBy': Comment._wrapDisplay(instance.createdBy),
