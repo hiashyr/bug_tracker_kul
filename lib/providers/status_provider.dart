@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trying_flutter/providers/issue_data_cache_provider.dart';
 import 'package:trying_flutter/services/api_exceptions.dart';
 import '../models/status.dart';
 import '../services/new_api_client.dart';
@@ -10,6 +11,13 @@ final statusesProvider = FutureProvider.family<List<Status>, String>((ref, issue
   if (!isAuthorized) {
       throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
     }
+  
+  // Сначала проверяем кеш
+  final cache = ref.watch(issueDataCacheProvider);
+  if (cache[issueId]?.areStatusesLoaded ?? false) {
+    return cache[issueId]!.statuses!;
+  }
+  
   final apiClient = ref.watch(newApiClientProvider);
   return apiClient.fetchStatuses(issueId);
 });

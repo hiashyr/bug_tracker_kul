@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trying_flutter/providers/issue_data_cache_provider.dart';
 import 'package:trying_flutter/services/api_exceptions.dart';
 import '../models/comment.dart';
 import '../services/new_api_client.dart';
@@ -9,6 +10,12 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issu
   if (!isAuthorized) {
       throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
     }
+
+  // Сначала проверяем кеш
+  final cache = ref.watch(issueDataCacheProvider);
+  if (cache[issueId]?.areCommentsLoaded ?? false) {
+    return cache[issueId]!.comments!;
+  }
 
   final apiClient = ref.watch(newApiClientProvider);
   return apiClient.fetchComments(issueId);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trying_flutter/models/issue.dart';
 import 'package:trying_flutter/providers/issue_provider.dart';
+import 'package:trying_flutter/providers/issues_preloader_provider.dart';
 import 'package:trying_flutter/services/error_helper.dart';
 import 'package:trying_flutter/theme/app_colors.dart';
 import 'package:trying_flutter/theme/app_typography.dart';
@@ -14,6 +15,7 @@ class IssuesListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
 
     final issuesAsync = ref.watch(issuesProvider);
+    final preloaderStatusAsync = ref.watch(issuesPreloaderProvider);
 
     return issuesAsync.when(
         loading: () => const Center(
@@ -47,6 +49,11 @@ class IssuesListScreen extends ConsumerWidget {
           ),
         ),
         data: (issues) {
+          // Запускаем предзагрузку когда задачи загружены
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(issuesPreloaderProvider.notifier).startPreloading(issues);
+          });
+
           if (issues.isEmpty) {
             return Center(
               child: Column(
@@ -67,13 +74,88 @@ class IssuesListScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: issues.length,
-            itemBuilder: (context, index) {
-              final issue = issues[index];
-              return _buildIssueCard(context, issue);
-            },
+          return Stack(
+            children: [
+              ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: issues.length,
+                itemBuilder: (context, index) {
+                  final issue = issues[index];
+                  return _buildIssueCard(context, issue);
+                },
+              ),
+              // Показываем прогресс загрузки если активна предзагрузка
+              preloaderStatusAsync.when(
+                data: (status) {
+                  if (!status.isActive || status.phase == PreloadingPhase.idle) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Colors.black87,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _getPhaseText(status.phase),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${status.completedIssues}/${status.totalIssues}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: status.progress,
+                              minHeight: 4,
+                              backgroundColor: Colors.white12,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppColors.brandBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ],
           );
         },
       );
@@ -249,5 +331,18 @@ class IssuesListScreen extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}.${date.month}.${date.year}';
+  }
+
+  String _getPhaseText(PreloadingPhase phase) {
+    switch (phase) {
+      case PreloadingPhase.loadingIssues:
+        return 'Загрузка деталей задач...';
+      case PreloadingPhase.loadingStatuses:
+        return 'Загрузка статусов...';
+      case PreloadingPhase.loadingComments:
+        return 'Загрузка комментариев...';
+      default:
+        return 'Загрузка...';
+    }
   }
 }
