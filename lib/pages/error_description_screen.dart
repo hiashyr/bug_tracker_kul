@@ -83,6 +83,7 @@ class ErrorDescriptionScreen extends ConsumerWidget {
   }
 
   Widget _buildcommentCard(BuildContext context, Comment comment) {
+    final id = comment.id.toString();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -94,40 +95,37 @@ class ErrorDescriptionScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.brandBlueLight,
                       borderRadius: BorderRadius.circular(6),
                     ),
+                    child: Text(
+                      "Коммент №$id",
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.brandBlue,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                comment.id.toString(),
-                style: AppTypography.issueId,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
               const SizedBox(height: 12),
               MarkdownBody(
                 data: comment.text,
                 styleSheet: MarkdownStyleSheet(
-                  p: AppTypography.issueDescription,
+                  p: AppTypography.issueDescription.copyWith(color: AppColors.backgroundDark),
                 ),
               ),
               const SizedBox(height: 12),
               Row(
+                mainAxisAlignment: .start,
                 children: [
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: AppColors.greyMedium),
+                        const Icon(Icons.person_outline, size: 14, color: AppColors.brandBlue),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -141,7 +139,7 @@ class ErrorDescriptionScreen extends ConsumerWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: AppColors.greyMedium),
+                      const Icon(Icons.calendar_today, size: 12, color: AppColors.brandBlue),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(comment.createdAt),
@@ -151,6 +149,29 @@ class ErrorDescriptionScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (comment.updatedBy != null && comment.updatedBy != comment.createdBy) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.edit_outlined, size: 14, color: AppColors.brandBlue),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Обновлён: ${comment.updatedBy}',
+                        style: AppTypography.caption,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.calendar_today, size: 12, color: AppColors.brandBlue),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(comment.updatedAt!),
+                      style: AppTypography.caption,
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -159,6 +180,11 @@ class ErrorDescriptionScreen extends ConsumerWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}.${date.month}.${date.year}';
+    final localDate = date.add(const Duration(hours: 3));
+    final day = localDate.day.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
+    final hour = localDate.hour.toString().padLeft(2, '0');
+    final minute = localDate.minute.toString().padLeft(2, '0');
+    return '$day.$month.${localDate.year} $hour:$minute';
   }
 }
