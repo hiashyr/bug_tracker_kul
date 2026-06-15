@@ -207,7 +207,12 @@ class IssueDetails extends StatelessWidget {
           const _LabelText('Описание:'),
           Text(
             issue.description!,
-            style: AppTypography.issueDescription,
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 14,
+              height: 1.4,
+              color: AppColors.backgroundDark,
+            ),
           ),
           const SizedBox(height: 12),
         ],

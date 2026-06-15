@@ -7,12 +7,71 @@ import 'package:trying_flutter/services/error_helper.dart';
 import 'package:trying_flutter/theme/app_colors.dart';
 import 'package:trying_flutter/theme/app_typography.dart';
 
-class IssuesListScreen extends ConsumerWidget {
+class IssuesListScreen extends ConsumerStatefulWidget {
   const IssuesListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<IssuesListScreen> createState() => _IssuesListScreenState();
+}
 
+class _IssuesListScreenState extends ConsumerState<IssuesListScreen> {
+  int _currentPage = 0;
+  static const int _pageSize = 10;
+
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String? _selectedStatus;
+
+  final List<String> _statusOptions = [
+    'Все',
+    'Тестируется',
+    'Можно тестировать',
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Issue> _filterIssues(List<Issue> issues) {
+    var filtered = issues;
+
+    // Фильтр по поиску в названии
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((issue) {
+        final summary = issue.summary ?? '';
+        return summary.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // Фильтр по статусу
+    if (_selectedStatus != null && _selectedStatus != 'Все') {
+      filtered = filtered.where((issue) {
+        return issue.status.toLowerCase() == _selectedStatus!.toLowerCase();
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+      _currentPage = 0;
+    });
+  }
+
+  void _onStatusChanged(String? value) {
+    setState(() {
+      _selectedStatus = value;
+      _currentPage = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final issuesAsync = ref.watch(issuesProvider);
 
     return issuesAsync.when(
@@ -40,43 +99,205 @@ class IssuesListScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               if (canRetryError(error))
                 ElevatedButton(
-                  onPressed: () => ref.invalidate(issuesProvider),
+                  onPressed: () {
+                    _currentPage = 0;
+                    ref.invalidate(issuesProvider);
+                  },
                   child: const Text('Повторить'),
                 ),
             ],
           ),
         ),
         data: (issues) {
-          if (issues.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.inbox, size: 64, color: AppColors.greyMedium),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Нет задач на тестировании',
-                    style: TextStyle(
-                      fontFamily: AppTypography.fontFamily,
-                      color: AppColors.greyMedium,
-                      fontSize: 16,
+          final filteredIssues = _filterIssues(issues);
+
+          if (filteredIssues.isEmpty) {
+            return Column(
+              children: [
+                _buildSearchAndFilterBar(),
+                const Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 64, color: AppColors.greyMedium),
+                        SizedBox(height: 16),
+                        Text(
+                          'Ничего не найдено',
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            color: AppColors.greyMedium,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: issues.length,
-            itemBuilder: (context, index) {
-              final issue = issues[index];
-              return _buildIssueCard(context, issue);
-            },
+          final totalPages = (filteredIssues.length / _pageSize).ceil();
+          if (_currentPage >= totalPages) _currentPage = 0;
+          final start = _currentPage * _pageSize;
+          final end = (start + _pageSize > filteredIssues.length)
+              ? filteredIssues.length
+              : start + _pageSize;
+          final pageIssues = filteredIssues.sublist(start, end);
+
+          return Column(
+            children: [
+              _buildSearchAndFilterBar(),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  itemCount: pageIssues.length,
+                  itemBuilder: (context, index) {
+                    final issue = pageIssues[index];
+                    return _buildIssueCard(context, issue);
+                  },
+                ),
+              ),
+              if (totalPages > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    border: Border(
+                      top: BorderSide(color: AppColors.greyLight.withValues(alpha: 0.5)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: _currentPage > 0
+                            ? () => setState(() => _currentPage--)
+                            : null,
+                        color: AppColors.brandBlue,
+                      ),
+                      ...List.generate(totalPages, (i) {
+                        final isActive = i == _currentPage;
+                        return GestureDetector(
+                          onTap: () => setState(() => _currentPage = i),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isActive ? AppColors.brandBlue : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                color: isActive ? AppColors.textOnBrand : AppColors.brandBlue,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _currentPage < totalPages - 1
+                            ? () => setState(() => _currentPage++)
+                            : null,
+                        color: AppColors.brandBlue,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           );
         },
       );
+  }
+
+  Widget _buildSearchAndFilterBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        border: Border(
+          bottom: BorderSide(color: AppColors.greyLight.withValues(alpha: 0.5)),
+        ),
+      ),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Поиск по названию...',
+              hintStyle: AppTypography.caption,
+              prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.greyMedium),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18, color: AppColors.greyMedium),
+                      onPressed: () {
+                        _searchController.clear();
+                        _onSearchChanged('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: AppColors.backgroundLight,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            style: const TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _statusOptions.map((status) {
+                  final isSelected = (status == 'Все' && _selectedStatus == null) ||
+                      status == _selectedStatus;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => _onStatusChanged(status == 'Все' ? null : status),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.brandBlue : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? AppColors.brandBlue : AppColors.greyMedium,
+                          ),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected ? AppColors.textOnBrand : AppColors.greyDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildIssueCard(BuildContext context, Issue issue) {
@@ -129,7 +350,7 @@ class IssuesListScreen extends ConsumerWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: AppColors.greyMedium),
+                        const Icon(Icons.person_outline, size: 14, color: AppColors.brandBlue),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -143,7 +364,7 @@ class IssuesListScreen extends ConsumerWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 12, color: AppColors.greyMedium),
+                      const Icon(Icons.calendar_today, size: 12, color: AppColors.brandBlue),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(issue.createdAt),
@@ -153,6 +374,26 @@ class IssuesListScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (issue.qaEngineer != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.bug_report_outlined, size: 14, color: AppColors.brandBlue),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Тестировщик: ${issue.qaEngineer}',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 11,
+                          color: AppColors.priorityHigh,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

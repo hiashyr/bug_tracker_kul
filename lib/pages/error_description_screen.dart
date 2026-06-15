@@ -8,11 +8,19 @@ import 'package:trying_flutter/services/error_helper.dart';
 import 'package:trying_flutter/theme/app_colors.dart';
 import 'package:trying_flutter/theme/app_typography.dart';
 
-class ErrorDescriptionScreen extends ConsumerWidget {
+class ErrorDescriptionScreen extends ConsumerStatefulWidget {
   const ErrorDescriptionScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ErrorDescriptionScreen> createState() => _ErrorDescriptionScreenState();
+}
+
+class _ErrorDescriptionScreenState extends ConsumerState<ErrorDescriptionScreen> {
+  int _currentPage = 0;
+  static const int _pageSize = 10;
+
+  @override
+  Widget build(BuildContext context) {
 
     final String errorcommentId = dotenv.get('ISSUE_ERROR_ID');
 
@@ -43,7 +51,10 @@ class ErrorDescriptionScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               if (canRetryError(error))
                 ElevatedButton(
-                  onPressed: () => ref.invalidate(commentsProvider),
+                  onPressed: () {
+                    _currentPage = 0;
+                    ref.invalidate(commentsProvider);
+                  },
                   child: const Text('Повторить'),
                 ),
             ],
@@ -70,13 +81,79 @@ class ErrorDescriptionScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: comments.length,
-            itemBuilder: (context, index) {
-              final comment = comments[index];
-              return _buildcommentCard(context, comment);
-            },
+          final totalPages = (comments.length / _pageSize).ceil();
+          if (_currentPage >= totalPages) _currentPage = 0;
+          final start = _currentPage * _pageSize;
+          final end = (start + _pageSize > comments.length)
+              ? comments.length
+              : start + _pageSize;
+          final pageComments = comments.sublist(start, end);
+
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: pageComments.length,
+                  itemBuilder: (context, index) {
+                    final comment = pageComments[index];
+                    return _buildcommentCard(context, comment);
+                  },
+                ),
+              ),
+              if (totalPages > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    border: Border(
+                      top: BorderSide(color: AppColors.greyLight.withValues(alpha: 0.5)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: _currentPage > 0
+                            ? () => setState(() => _currentPage--)
+                            : null,
+                        color: AppColors.brandBlue,
+                      ),
+                      ...List.generate(totalPages, (i) {
+                        final isActive = i == _currentPage;
+                        return GestureDetector(
+                          onTap: () => setState(() => _currentPage = i),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isActive ? AppColors.brandBlue : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                color: isActive ? AppColors.textOnBrand : AppColors.brandBlue,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _currentPage < totalPages - 1
+                            ? () => setState(() => _currentPage++)
+                            : null,
+                        color: AppColors.brandBlue,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           );
         },
       );
