@@ -26,6 +26,7 @@ class CommentList extends StatelessWidget {
               'Комментарии',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: AppColors.brandBlue,
                   ),
             ),
           ],
@@ -116,7 +117,11 @@ class _CommentCard extends StatelessWidget {
               MarkdownBody(
                 data: comment.text,
                 styleSheet: MarkdownStyleSheet(
-                  p: AppTypography.issueDescription,
+                  p: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: AppColors.backgroundDark,
+                  ),
                 ),
               ),
             if (comment.updatedAt != null &&

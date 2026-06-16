@@ -65,6 +65,7 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.backgroundDark,
                   ),
                 ),
                 IconButton(
@@ -78,9 +79,8 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
               height: 48,
               child: QuillSimpleToolbar(
                 controller: _quillController,
-                config: const QuillSimpleToolbarConfig(
+                config: QuillSimpleToolbarConfig(
                   color: AppColors.brandBlue,
-                  // sectionDividerColor: AppColors.greyDark,
                   showDirection: false,
                   showHeaderStyle: true,
                   multiRowsDisplay: false,
@@ -89,6 +89,22 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                   showListNumbers: true,
                   showQuote: true,
                   showLink: true,
+                  showFontFamily: false,
+                  showFontSize: false,
+                  showColorButton : false,
+                  showBackgroundColorButton : false,
+                  showSubscript: false,
+                  showSuperscript: false,
+                  showSearchButton: false,
+                  customButtons: [
+                    QuillToolbarCustomButtonOptions(
+                      icon: const Icon(Icons.table_chart),
+                      tooltip: 'Таблица',
+                      onPressed: () {
+                        debugPrint('Table button pressed (stub)');
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
