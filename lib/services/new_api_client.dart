@@ -300,12 +300,16 @@ class NewApiClient {
   }
 
   /// Метод для добавления комментария к задаче
-  Future<Comment> addingComment(String issueId, String commentText) async {
+  Future<Comment> addingComment(String issueId, String commentText, {List<String>? attachmentIds}) async {
     return _executeRequest(
       () async {
+        final data = <String, dynamic>{'text': commentText};
+        if (attachmentIds != null && attachmentIds.isNotEmpty) {
+          data['attachmentIds'] = attachmentIds;
+        }
         final response = await _dio.post(
           '/issues/$issueId/comments',
-          data: {'text': commentText},
+          data: data,
         );
         return Comment.fromJson(response.data as Map<String, dynamic>);
       },
@@ -396,17 +400,27 @@ class NewApiClient {
       'получение комментариев');
   }
 
-  /// Запрос на загрузку файла в облачное хранилище трекера
-  Future<List<Comment>> uploadFile(String issueId) {
-    return _executeRequest(
+  /// Загружает временный файл в облачное хранилище трекера.
+  /// Возвращает идентификатор загруженного файла (attachmentId).
+  /// [filePath] — путь к файлу на устройстве.
+  /// [filename] — опциональное имя файла на сервере (если не указано, используется исходное).
+  Future<String> uploadTempFile(String filePath, {String? filename}) {
+    return _executeRequest<String>(
       () async {
-        final response = await _dio.get('attachments');
-        final list = response.data as List<dynamic>;
-        return list
-              .map((item) => Comment.fromJson(item as Map<String, dynamic>))
-              .toList();
+        final formData = FormData.fromMap({
+          'file': await MultipartFile.fromFile(filePath, filename: filename),
+        });
+        final response = await _dio.post(
+          '/attachments',
+          data: formData,
+          options: Options(
+            contentType: 'multipart/form-data',
+          ),
+        );
+        return (response.data['id'] as num).toString();
       },
-      'получение комментариев');
+      'загрузка временного файла',
+    );
   }
 
   void dispose() {

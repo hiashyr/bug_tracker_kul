@@ -22,14 +22,14 @@ final commentsProvider = FutureProvider.family<List<Comment>, String>((ref, issu
 });
 
 final addCommentProvider = Provider((ref) {
-  return (String issueId, String commentText) async {
+  return (String issueId, String commentText, {List<String>? attachmentIds}) async {
   final isAuthorized = ref.watch(isAuthorizedProvider);
   if (!isAuthorized) {
     throw ApiException(statusCode: 401, message: 'Требуется авторизация', url: '');  
   }
 
     final apiClient = ref.read(newApiClientProvider);
-    final newComment = await apiClient.addingComment(issueId, commentText);
+    final newComment = await apiClient.addingComment(issueId, commentText, attachmentIds: attachmentIds);
     ref.invalidate(commentsProvider(issueId));
     return newComment;
   };
