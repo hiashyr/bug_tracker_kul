@@ -29,7 +29,6 @@ final currentUserProvider = FutureProvider<User?>((ref) async {
     email: apiUser.email,
     cloudUid: apiUser.cloudUid,
     defaultAvatarId: defaultAvatarId,
-    isAvatarEmpty: defaultAvatarId == null || defaultAvatarId.isEmpty,
   );
 });
 
