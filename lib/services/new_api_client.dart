@@ -371,6 +371,8 @@ class NewApiClient {
     );
   }
 
+  /// Запрос на получение конкретной задачи по ID
+
   Future<Issue> fetchIssue(String issueId) async {
     return _executeRequest(
       () async {
@@ -381,10 +383,24 @@ class NewApiClient {
     );
   }
 
+  /// Запрос на получение комментариев задачи по ID
   Future<List<Comment>> fetchComments(String issueId) {
     return _executeRequest(
       () async {
         final response = await _dio.get('/issues/$issueId/comments');
+        final list = response.data as List<dynamic>;
+        return list
+              .map((item) => Comment.fromJson(item as Map<String, dynamic>))
+              .toList();
+      },
+      'получение комментариев');
+  }
+
+  /// Запрос на загрузку файла в облачное хранилище трекера
+  Future<List<Comment>> uploadFile(String issueId) {
+    return _executeRequest(
+      () async {
+        final response = await _dio.get('attachments');
         final list = response.data as List<dynamic>;
         return list
               .map((item) => Comment.fromJson(item as Map<String, dynamic>))

@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,6 +103,22 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                       tooltip: 'Таблица',
                       onPressed: () {
                         debugPrint('Table button pressed (stub)');
+                      },
+                    ),
+                    QuillToolbarCustomButtonOptions(
+                      icon: const Icon(Icons.attach_file),
+                      tooltip: 'Прикрепить файл',
+                      onPressed: () async {
+                        final result = await FilePicker.pickFiles();
+                        if (result != null && result.files.isNotEmpty) {
+                          final fileName = result.files.first.name;
+                          debugPrint('Selected file: $fileName');
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Выбран файл: $fileName')),
+                            );
+                          }
+                        }
                       },
                     ),
                   ],
