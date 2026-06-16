@@ -16,6 +16,9 @@ class IssuesListScreen extends ConsumerStatefulWidget {
 }
 
 class _IssuesListScreenState extends ConsumerState<IssuesListScreen> {
+
+  bool _preloadingStarted = false;
+
   int _currentPage = 0;
   static const int _pageSize = 10;
 
@@ -112,9 +115,12 @@ class _IssuesListScreenState extends ConsumerState<IssuesListScreen> {
         ),
         data: (issues) {
           // Запускаем предзагрузку когда задачи загружены
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(issuesPreloaderProvider.notifier).startPreloading(issues);
-          });
+          if (!_preloadingStarted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _preloadingStarted = true;
+              ref.read(issuesPreloaderProvider.notifier).startPreloading(issues);
+            });
+          }
 
           if (issues.isEmpty) {
             return Center(
