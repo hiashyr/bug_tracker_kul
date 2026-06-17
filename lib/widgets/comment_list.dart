@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:trying_flutter/theme/app_typography.dart';
 import '../models/comment.dart';
 import '../theme/app_colors.dart';
 

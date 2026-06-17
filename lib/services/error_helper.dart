@@ -51,7 +51,7 @@ IconData getErrorIcon(Object error) {
 
 bool canRetryError(Object error) {
   if (error is ApiException) {
-    return error.isRetryable;  // Просто используем его
+    return error.isRetryable;
   }
   if (error is NetworkException) {
     return true;
