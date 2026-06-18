@@ -33,7 +33,7 @@ String formatResponseBody(dynamic data) {
         ? const JsonEncoder.withIndent('  ').convert(data)
         : data.toString();
     final pretty = _prettyPrintJson(str);
-    return '${_magenta}BODY_OF_RESPONSE:$_reset\n$pretty';
+    return '${_magenta}BODY_OF_RESPONSE:$_reset\n${_truncateWithSize(pretty)}';
   } catch (_) {
     return '${_magenta}BODY_OF_RESPONSE:$_reset\n${_truncateWithSize(data.toString())}';
   }
