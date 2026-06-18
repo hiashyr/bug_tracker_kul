@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:markdown_quill/markdown_quill.dart';
 import '../providers/comment_provider.dart';
 import '../providers/status_provider.dart';
+import '../providers/upload_provider.dart';
 import '../theme/app_colors.dart';
 
 class FixCommentDialog extends ConsumerStatefulWidget {
@@ -110,13 +111,35 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                       tooltip: 'Прикрепить файл',
                       onPressed: () async {
                         final result = await FilePicker.pickFiles();
-                        if (result != null && result.files.isNotEmpty) {
-                          final fileName = result.files.first.name;
-                          debugPrint('Selected file: $fileName');
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Выбран файл: $fileName')),
+                        if (result != null) {
+                          final file = result.files.first;
+                          final filePath = file.path;
+                          if (filePath == null) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Не удалось получить путь к файлу')),
+                              );
+                            }
+                            return;
+                          }
+
+                          try {
+                            final uploadFile = ref.read(uploadFileProvider);
+                            final attachmentId = await uploadFile(
+                              filePath,
+                              filename: file.name,
                             );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Файл загружен: ${file.name}, attachmentId: $attachmentId')),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Ошибка загрузки файла: $e')),
+                              );
+                            }
                           }
                         }
                       },
