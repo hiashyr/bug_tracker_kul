@@ -19,6 +19,7 @@ class FixCommentDialog extends ConsumerStatefulWidget {
 
 class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
   late final QuillController _quillController;
+  final List<String> _attachmentIds = [];
 
   @override
   void initState() {
@@ -42,7 +43,11 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
 
     Future.wait([
       addErrorComment(markdown),
-      addComment(widget.issueId, markdown),
+      addComment(
+        widget.issueId,
+        markdown,
+        attachmentIds: _attachmentIds.isNotEmpty ? _attachmentIds : null,
+      ),
       statusTransition(widget.issueId, 'tested'),
     ]);
 
@@ -122,8 +127,11 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                               filename: fileName,
                             );
                             if (context.mounted) {
+                              setState(() {
+                                _attachmentIds.add(attachmentId);
+                              });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Файл загружен: $fileName, attachmentId: $attachmentId')),
+                                SnackBar(content: Text('Файл прикреплён: $fileName')),
                               );
                             }
                           } catch (e) {
