@@ -110,28 +110,20 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                       icon: const Icon(Icons.attach_file),
                       tooltip: 'Прикрепить файл',
                       onPressed: () async {
-                        final result = await FilePicker.pickFiles();
+                        final result = await FilePicker.pickFiles(type: FileType.any, withData: true);
                         if (result != null) {
-                          final file = result.files.first;
-                          final filePath = file.path;
-                          if (filePath == null) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Не удалось получить путь к файлу')),
-                              );
-                            }
-                            return;
-                          }
-
+                          final xFile = result.files.first.xFile;
+                          final fileName = result.files.first.name;
                           try {
+                            final bytes = await xFile.readAsBytes();
                             final uploadFile = ref.read(uploadFileProvider);
                             final attachmentId = await uploadFile(
-                              filePath,
-                              filename: file.name,
+                              bytes,
+                              filename: fileName,
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Файл загружен: ${file.name}, attachmentId: $attachmentId')),
+                                SnackBar(content: Text('Файл загружен: $fileName, attachmentId: $attachmentId')),
                               );
                             }
                           } catch (e) {

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -401,13 +402,13 @@ class NewApiClient {
   }
 
   /// Загружает временный файл в облачное хранилище трекера и возвращает attachmentId
-  /// [filePath] — путь к файлу на устройстве.
-  /// [filename] — опциональное имя файла на сервере (если не указано, используется исходное).
-  Future<String> uploadTempFile(String filePath, {String? filename}) {
+  /// [bytes] — содержимое файла в виде байтов (работает на всех платформах, включая web).
+  /// [filename] — имя файла на сервере.
+  Future<String> uploadTempFile(Uint8List bytes, {required String filename}) {
     return _executeRequest<String>(
       () async {
         final formData = FormData.fromMap({
-          'file': await MultipartFile.fromFile(filePath, filename: filename),
+          'file': MultipartFile.fromBytes(bytes, filename: filename),
         });
         final response = await _dio.post(
           '/attachments',
@@ -416,7 +417,7 @@ class NewApiClient {
             contentType: 'multipart/form-data',
           ),
         );
-        return (response.data['id'] as num).toString();
+        return (response.data['id']);
       },
       'загрузка временного файла',
     );
