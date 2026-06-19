@@ -43,7 +43,10 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
     final statusTransition = ref.read(statusTransitionProvider);
 
     Future.wait([
-      addErrorComment(markdown),
+      addErrorComment(
+      markdown,
+      attachmentIds: _attachments.isNotEmpty ? _attachments.map((a) => a.id).toList() : null,
+    ),
       addComment(
         widget.issueId,
         markdown,

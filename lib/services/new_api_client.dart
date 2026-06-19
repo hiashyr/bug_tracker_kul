@@ -320,19 +320,23 @@ class NewApiClient {
   }
 
   /// Метод для добавления комментария с описанием ошибки к задаче
-  Future<Comment> addingErrorComment(String commentText) async {
-    final String errorIssueId = dotenv.get('ISSUE_ERROR_ID');
-    return _executeRequest(
-      () async {
-        final response = await _dio.post(
-          '/issues/$errorIssueId/comments',
-          data: {'text': commentText},
-        );
-        return Comment.fromJson(response.data as Map<String, dynamic>);
-      },
-      'добавление описания ошибки',
-    );
-  }
+Future<Comment> addingErrorComment(String commentText, {List<String>? attachmentIds}) async {
+  final String errorIssueId = dotenv.get('ISSUE_ERROR_ID');
+  return _executeRequest(
+    () async {
+      final data = <String, dynamic>{'text': commentText};
+      if (attachmentIds != null && attachmentIds.isNotEmpty) {
+        data['attachmentIds'] = attachmentIds;
+      }
+      final response = await _dio.post(
+        '/issues/$errorIssueId/comments',
+        data: data,
+      );
+      return Comment.fromJson(response.data as Map<String, dynamic>);
+    },
+    'добавление описания ошибки',
+  );
+}
 
 
   /// Получение ID аватарки пользователя из Яндекс профиля
