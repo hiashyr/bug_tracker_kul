@@ -424,6 +424,36 @@ class NewApiClient {
     );
   }
 
+  /// Загружает миниатюру графического файла по [issueId] и [attachmentId]
+  /// Возвращает байты изображения.
+  Future<Uint8List> fetchThumbnail(String issueId, String attachmentId) {
+    return _executeRequest<Uint8List>(
+      () async {
+        final response = await _dio.get(
+          '/issues/$issueId/thumbnails/$attachmentId',
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return response.data as Uint8List;
+      },
+      'получение миниатюры',
+    );
+  }
+
+  /// Загружает содержимое attachment по URL [contentUrl] (поле content из ответа)
+  /// Возвращает байты файла.
+  // Future<Uint8List> fetchAttachmentContent(String contentUrl) {
+  //   return _executeRequest<Uint8List>(
+  //     () async {
+  //       final response = await _dio.get(
+  //         contentUrl,
+  //         options: Options(responseType: ResponseType.bytes),
+  //       );
+  //       return response.data as Uint8List;
+  //     },
+  //     'загрузка содержимого attachment',
+  //   );
+  // }
+
   void dispose() {
     _dio.close();
   }

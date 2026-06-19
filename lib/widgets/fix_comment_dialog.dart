@@ -179,24 +179,24 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                 child: Row(
                   children: [
                     const Icon(Icons.attach_file, size: 18, color: AppColors.brandBlue),
-                    const SizedBox(width: 6),
-                    Expanded(
+                    const SizedBox(width: 4),
+                    GestureDetector(
                       child: Text(
                         attachment.name,
-                        style: const TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.brandBlue,
+                        ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      color: AppColors.error,
-                      onPressed: () {
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () {
                         setState(() {
                           _attachments.remove(attachment);
                         });
                       },
+                      child: const Icon(Icons.close, size: 16, color: AppColors.error),
                     ),
                   ],
                 ),

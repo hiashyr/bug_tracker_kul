@@ -6,6 +6,7 @@ part 'attachment.g.dart';
 class Attachment {
   final String id;
   final String name;
+  final String content;
 
   @JsonKey(name: 'createdBy', fromJson: _extractDisplay, toJson: _wrapDisplay)
   final String display;
@@ -13,6 +14,7 @@ class Attachment {
   Attachment({
     required this.id,
     required this.name,
+    required this.content,
     required this.display,
   });
 
