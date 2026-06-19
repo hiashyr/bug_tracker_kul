@@ -11,10 +11,12 @@ class IssueCard extends StatelessWidget {
   final VoidCallback? onFixRequested;
   final List<Status>? availableStatuses;
   final ValueChanged<Status>? onStatusSelected;
+  final Widget? attachmentsWidget;
 
   const IssueCard({
     super.key,
     required this.issue,
+    this.attachmentsWidget,
     this.onRefresh,
     this.onTransitionToTesting,
     this.onFixRequested,
@@ -37,7 +39,7 @@ class IssueCard extends StatelessWidget {
               onStatusSelected: onStatusSelected,
             ),
             const SizedBox(height: 16),
-            IssueDetails(issue: issue),
+            IssueDetails(issue: issue, attachmentsWidget: attachmentsWidget),
             const SizedBox(height: 12),
             IssueActions(
               issue: issue,
@@ -183,8 +185,9 @@ class IssueHeader extends StatelessWidget {
 
 class IssueDetails extends StatelessWidget {
   final Issue issue;
+  final Widget? attachmentsWidget;
 
-  const IssueDetails({super.key, required this.issue});
+  const IssueDetails({super.key, required this.issue, this.attachmentsWidget});
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +217,10 @@ class IssueDetails extends StatelessWidget {
               color: AppColors.backgroundDark,
             ),
           ),
+          const SizedBox(height: 12),
+        ],
+        if (attachmentsWidget != null) ...[
+          attachmentsWidget!,
           const SizedBox(height: 12),
         ],
         const Divider(),
