@@ -424,36 +424,33 @@ class NewApiClient {
     );
   }
 
-  /// Загружает миниатюру графического файла по [issueId] и [attachmentId]
-  /// Возвращает байты изображения.
-  Future<Uint8List> fetchThumbnail(String issueId, String attachmentId) {
+  /// Получает список файлов, прикреплённых к задаче и к комментариям под ней.
+  Future<List<Attachment>> fetchAttachments(String issueId) {
+    return _executeRequest<List<Attachment>>(
+      () async {
+        final response = await _dio.get('/issues/$issueId/attachments');
+        final list = response.data as List<dynamic>;
+        return list
+            .map((item) => Attachment.fromJson(item as Map<String, dynamic>))
+            .toList();
+      },
+      'получение списка прикреплённых файлов',
+    );
+  }
+
+  /// Загружает байты изображения по URL [thumbnailUrl] (поле thumbnail из ответа).
+  Future<Uint8List> fetchThumbnailBytes(String thumbnailUrl) {
     return _executeRequest<Uint8List>(
       () async {
         final response = await _dio.get(
-          '/issues/$issueId/thumbnails/$attachmentId',
+          thumbnailUrl,
           options: Options(responseType: ResponseType.bytes),
         );
         return response.data as Uint8List;
       },
-      'получение миниатюры',
+      'загрузка миниатюры',
     );
   }
-
-  /// Загружает содержимое attachment по URL [contentUrl] (поле content из ответа)
-  /// Возвращает байты файла.
-  // Future<Uint8List> fetchAttachmentContent(String contentUrl) {
-  //   return _executeRequest<Uint8List>(
-  //     () async {
-  //       final response = await _dio.get(
-  //         contentUrl,
-  //         options: Options(responseType: ResponseType.bytes),
-  //       );
-  //       return response.data as Uint8List;
-  //     },
-  //     'загрузка содержимого attachment',
-  //   );
-  // }
-
   void dispose() {
     _dio.close();
   }

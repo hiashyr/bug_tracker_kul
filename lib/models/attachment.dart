@@ -7,6 +7,7 @@ class Attachment {
   final String id;
   final String name;
   final String content;
+  final String? thumbnail;
 
   @JsonKey(name: 'createdBy', fromJson: _extractDisplay, toJson: _wrapDisplay)
   final String display;
@@ -15,6 +16,7 @@ class Attachment {
     required this.id,
     required this.name,
     required this.content,
+    this.thumbnail,
     required this.display,
   });
 

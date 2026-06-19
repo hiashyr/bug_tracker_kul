@@ -10,6 +10,7 @@ Attachment _$AttachmentFromJson(Map<String, dynamic> json) => Attachment(
   id: json['id'] as String,
   name: json['name'] as String,
   content: json['content'] as String,
+  thumbnail: json['thumbnail'] as String?,
   display: Attachment._extractDisplay(
     json['createdBy'] as Map<String, dynamic>?,
   ),
@@ -20,5 +21,6 @@ Map<String, dynamic> _$AttachmentToJson(Attachment instance) =>
       'id': instance.id,
       'name': instance.name,
       'content': instance.content,
+      'thumbnail': instance.thumbnail,
       'createdBy': Attachment._wrapDisplay(instance.display),
     };
