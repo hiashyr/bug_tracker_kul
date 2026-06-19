@@ -163,6 +163,46 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                 ),
               ),
             ),
+            if (_attachments.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Прикреплённые файлы:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.backgroundDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              ..._attachments.map((attachment) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    const Icon(Icons.attach_file, size: 18, color: AppColors.brandBlue),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        attachment.name,
+                        style: const TextStyle(fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      color: AppColors.error,
+                      onPressed: () {
+                        setState(() {
+                          _attachments.remove(attachment);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 8),
+            ],
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
