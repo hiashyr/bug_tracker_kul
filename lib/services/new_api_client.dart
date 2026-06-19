@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:trying_flutter/models/attachment.dart';
 import 'package:trying_flutter/models/comment.dart';
 import 'package:trying_flutter/models/issue.dart';
 import 'package:trying_flutter/models/status.dart';
@@ -401,11 +402,11 @@ class NewApiClient {
       'получение комментариев');
   }
 
-  /// Загружает временный файл в облачное хранилище трекера и возвращает attachmentId
+  /// Загружает временный файл в облачное хранилище трекера и возвращает Attachment
   /// [bytes] — содержимое файла в виде байтов (работает на всех платформах, включая web).
   /// [filename] — имя файла на сервере.
-  Future<String> uploadTempFile(Uint8List bytes, {required String filename}) {
-    return _executeRequest<String>(
+  Future<Attachment> uploadTempFile(Uint8List bytes, {required String filename}) {
+    return _executeRequest<Attachment>(
       () async {
         final formData = FormData.fromMap({
           'file': MultipartFile.fromBytes(bytes, filename: filename),
@@ -417,7 +418,7 @@ class NewApiClient {
             contentType: 'multipart/form-data',
           ),
         );
-        return (response.data['id']);
+        return Attachment.fromJson(response.data as Map<String, dynamic>);
       },
       'загрузка временного файла',
     );

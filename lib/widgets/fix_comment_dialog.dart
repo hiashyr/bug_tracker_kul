@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:markdown_quill/markdown_quill.dart';
+import '../models/attachment.dart';
 import '../providers/comment_provider.dart';
 import '../providers/status_provider.dart';
 import '../providers/upload_provider.dart';
@@ -19,7 +20,7 @@ class FixCommentDialog extends ConsumerStatefulWidget {
 
 class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
   late final QuillController _quillController;
-  final List<String> _attachmentIds = [];
+  final List<Attachment> _attachments = [];
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
       addComment(
         widget.issueId,
         markdown,
-        attachmentIds: _attachmentIds.isNotEmpty ? _attachmentIds : null,
+        attachmentIds: _attachments.isNotEmpty ? _attachments.map((a) => a.id).toList() : null,
       ),
       statusTransition(widget.issueId, 'tested'),
     ]);
@@ -122,13 +123,13 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                           try {
                             final bytes = await xFile.readAsBytes();
                             final uploadFile = ref.read(uploadFileProvider);
-                            final attachmentId = await uploadFile(
+                            final attachment = await uploadFile(
                               bytes,
                               filename: fileName,
                             );
                             if (context.mounted) {
                               setState(() {
-                                _attachmentIds.add(attachmentId);
+                                _attachments.add(attachment);
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('Файл прикреплён: $fileName')),
