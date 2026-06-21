@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trying_flutter/theme/app_colors.dart';
 
 import '../services/new_api_client.dart';
 
@@ -87,7 +88,7 @@ Future<void> showThumbnailPreview(
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(fileName, style: const TextStyle(fontSize: 16)),
+        title: Text(fileName, style: const TextStyle(fontSize: 16, color: AppColors.brandBlue)),
         content: SizedBox(
           width: double.maxFinite,
           child: InteractiveViewer(

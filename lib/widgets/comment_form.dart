@@ -49,7 +49,8 @@ class _CommentFormState extends ConsumerState<CommentForm> {
       _focusNode.requestFocus();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Комментарий добавлен')),
+        const SnackBar(content: Text('Комментарий добавлен'),
+        backgroundColor: Colors.green,),
       );
     } catch (e) {
       if (!mounted) return;
