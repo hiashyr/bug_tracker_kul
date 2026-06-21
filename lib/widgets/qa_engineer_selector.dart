@@ -74,67 +74,69 @@ class _QaEngineerSelectorState extends ConsumerState<QaEngineerSelector> {
   }
 
   Widget _buildContent(BuildContext context, List<User> users) {
-    if (users.isEmpty) {
-      return Text(
-        'Нет доступных QA инженеров',
-        style: TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          color: AppColors.greyMedium,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        DropdownButtonFormField<User>(
-          value: _selectedEngineer,
-          decoration: const InputDecoration(
-            labelText: 'Выберите QA инженера',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-          ),
-          items: users.map((user) {
-            return DropdownMenuItem<User>(
-              value: user,
-              child: _UserMenuItem(user: user),
-            );
-          }).toList(),
-          onChanged: _isLoading
-              ? null
-              : (user) {
-                  setState(() {
-                    _selectedEngineer = user;
-                  });
-                },
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed:
-                _isLoading || _selectedEngineer == null ? null : _performTransition,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.warning,
-              foregroundColor: AppColors.textOnBrand,
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.textOnBrand,
-                    ),
-                  )
-                : const Text('Перевести на тестирование'),
-          ),
-        ),
-      ],
+  if (users.isEmpty) {
+    return Text(
+      'Нет доступных QA инженеров',
+      style: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        color: AppColors.greyMedium,
+      ),
     );
   }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButton<User>(
+            isExpanded: true,
+            underline: const SizedBox(),
+            value: _selectedEngineer,
+            hint: const Text('Выберите QA инженера'),
+            items: users.map((user) {
+              return DropdownMenuItem<User>(
+                value: user,
+                child: _UserMenuItem(user: user),
+              );
+            }).toList(),
+            onChanged: _isLoading ? null : (user) {
+              setState(() {
+                _selectedEngineer = user;
+              });
+            },
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _isLoading || _selectedEngineer == null ? null : _performTransition,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.warning,
+            foregroundColor: AppColors.textOnBrand,
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.textOnBrand,
+                  ),
+                )
+              : const Text('Перевести на тестирование'),
+        ),
+      ),
+    ],
+  );
+}
 
   Future<void> _performTransition() async {
     if (_selectedEngineer == null || _isLoading) return;
@@ -186,15 +188,17 @@ class _UserMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 300),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             user.display,
-            style: AppTypography.issueSummary,
+            style: AppTypography.issueSummary.copyWith(
+              height: 1.2, // Уменьшаем высоту строки
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -202,6 +206,7 @@ class _UserMenuItem extends StatelessWidget {
             user.login,
             style: AppTypography.chipText.copyWith(
               color: AppColors.greyMedium,
+              height: 1.2, // Уменьшаем высоту строки
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
