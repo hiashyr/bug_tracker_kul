@@ -78,7 +78,7 @@ class IssueHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-          Text(
+        Text(
           issue.key,
           style: TextStyle(
             fontFamily: AppTypography.issueId.fontFamily,
@@ -195,10 +195,7 @@ class IssueDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _LabelText('Приоритет:'),
-        Text(
-          issue.priority,
-          style: AppTypography.issueDescription,
-        ),
+        Text(issue.priority, style: AppTypography.issueDescription),
         const SizedBox(height: 12),
         const _LabelText('Название:'),
         Text(
@@ -225,14 +222,94 @@ class IssueDetails extends StatelessWidget {
         ],
         const Divider(),
         const SizedBox(height: 8),
-        Text(
-          'Создал: ${issue.createdBy}',
-          style: AppTypography.caption,
+        if (issue.qaEngineer != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.bug_report_outlined,
+                  size: 14,
+                  color: AppColors.brandBlue,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Тестировщик:',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 12,
+                    color: AppColors.brandBlue,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${issue.qaEngineer}',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.person_outline,
+                size: 14,
+                color: AppColors.brandBlue,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Создал:',
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 12,
+                  color: AppColors.priorityMedium,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                issue.createdBy,
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-        Text(
-          'Дата: ${_formatDate(issue.createdAt)}',
-          style: AppTypography.caption,
-        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.calendar_today,
+                size: 12,
+                color: AppColors.brandBlue,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Дата: ',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 12,
+                color: AppColors.priorityMedium,
+              ),
+            ),
+            Text(
+              _formatDate(issue.createdAt),
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),)
       ],
     );
   }
@@ -255,14 +332,14 @@ class _LabelText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-          text,
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontWeight: FontWeight.bold,
-            color: AppColors.brandBlue,
-            fontSize: 15,
-          ),
-        );
+      text,
+      style: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontWeight: FontWeight.bold,
+        color: AppColors.brandBlue,
+        fontSize: 15,
+      ),
+    );
   }
 }
 
@@ -309,10 +386,7 @@ class IssueActions extends StatelessWidget {
                 onStatusSelected?.call(status);
               }
             },
-            icon: Icon(
-              _iconForStatus(display),
-              size: 18,
-            ),
+            icon: Icon(_iconForStatus(display), size: 18),
             label: Text(display),
             style: ElevatedButton.styleFrom(
               backgroundColor: _colorForStatus(display),
@@ -433,9 +507,6 @@ class _StatusChip extends StatelessWidget {
 
     if (onTap == null) return chip;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: chip,
-    );
+    return GestureDetector(onTap: onTap, child: chip);
   }
 }

@@ -59,7 +59,7 @@ class _EmptyCommentsState extends StatelessWidget {
           Icon(
             Icons.chat_bubble_outline,
             size: 56,
-            color: AppColors.greyMedium.withValues(alpha: 0.6),
+            color: AppColors.brandBlue.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 12),
           Text(

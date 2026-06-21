@@ -242,66 +242,63 @@ class _AttachmentsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Прикреплённые файлы',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: onAttachFile,
-                icon: const Icon(Icons.attach_file, size: 18),
-                label: const Text('Прикрепить файл'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (attachments.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Нет прикреплённых файлов',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-            )
-          else
-            SizedBox(
-              height: 80,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: attachments.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final attachment = attachments[index];
-                  final isImage = attachment.thumbnail != null;
-                  return GestureDetector(
-                    onTap: isImage
-                        ? () => showThumbnailPreview(context, ref, attachment.thumbnail!, attachment.name)
-                        : null,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: isImage
-                          ? ThumbnailTile(thumbnailUrl: attachment.thumbnail!, size: 80)
-                          : const Icon(Icons.insert_drive_file, size: 32, color: Colors.grey),
-                    ),
-                  );
-                },
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Прикреплённые файлы',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
             ),
-        ],
-      ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: onAttachFile,
+              icon: const Icon(Icons.attach_file, size: 18),
+              label: const Text('Прикрепить файл'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (attachments.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'Нет прикреплённых файлов',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          )
+        else
+          SizedBox(
+            height: 80,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: attachments.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final attachment = attachments[index];
+                final isImage = attachment.thumbnail != null;
+                return GestureDetector(
+                  onTap: isImage
+                      ? () => showThumbnailPreview(context, ref, attachment.thumbnail!, attachment.name)
+                      : null,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: isImage
+                        ? ThumbnailTile(thumbnailUrl: attachment.thumbnail!, size: 80)
+                        : const Icon(Icons.insert_drive_file, size: 32, color: Colors.grey),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
