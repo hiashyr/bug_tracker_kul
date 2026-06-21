@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/attachment.dart';
 import '../models/status.dart';
@@ -37,7 +38,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   }
 
   Future<void> _attachFile() async {
-    final result = await FilePicker.pickFiles(type: FileType.any, withData: true);
+    final result = await FilePicker.pickFiles(
+      type: FileType.any,
+      withData: true,
+    );
     if (result == null) return;
 
     final xFile = result.files.first.xFile;
@@ -46,120 +50,125 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     try {
       final bytes = await xFile.readAsBytes();
       final apiClient = ref.read(newApiClientProvider);
-      await apiClient.uploadIssueAttachment(widget.issueId, bytes, filename: fileName);
+      await apiClient.uploadIssueAttachment(
+        widget.issueId,
+        bytes,
+        filename: fileName,
+      );
       if (!mounted) return;
       ref.invalidate(attachmentsProvider(widget.issueId));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Файл прикреплён: $fileName'),
-        backgroundColor: AppColors.success,),
+        SnackBar(
+          content: Text('Файл прикреплён: $fileName'),
+          backgroundColor: AppColors.success,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка прикрепления файла: $e'),
-        backgroundColor: AppColors.error,),
+        SnackBar(
+          content: Text('Ошибка прикрепления файла: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
   @override
-Widget build(BuildContext context) {
-  final issueAsync = ref.watch(issueProvider(widget.issueId));
-  final commentsAsync = ref.watch(commentsProvider(widget.issueId));
-  final statusesAsync = ref.watch(statusesProvider(widget.issueId));
-  final attachmentsAsync = ref.watch(attachmentsProvider(widget.issueId));
+  Widget build(BuildContext context) {
+    final issueAsync = ref.watch(issueProvider(widget.issueId));
+    final commentsAsync = ref.watch(commentsProvider(widget.issueId));
+    final statusesAsync = ref.watch(statusesProvider(widget.issueId));
+    final attachmentsAsync = ref.watch(attachmentsProvider(widget.issueId));
 
-  return Column(
-    children: [
-      // Скроллящаяся область: информация о задаче + комментарии
-      Expanded(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Карточка задачи
-              Center(
-                child: issueAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (error, _) => Center(
-                    child: Text('Ошибка: $error'),
-                  ),
-                  data: (issue) {
-                    final availableStatuses = statusesAsync.whenOrNull(
-                      data: (statuses) => statuses,
-                    );
+    return Column(
+      children: [
+        // Скроллящаяся область: информация о задаче + комментарии
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Карточка задачи
+                Center(
+                  child: issueAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => Center(child: Text('Ошибка: $error')),
+                    data: (issue) {
+                      final availableStatuses = statusesAsync.whenOrNull(
+                        data: (statuses) => statuses,
+                      );
 
-                    final attachmentsWidget = attachmentsAsync.when(
-                      data: (attachments) {
-                        return _AttachmentsSection(
-                          issueId: widget.issueId,
-                          attachments: attachments,
-                          onAttachFile: _attachFile,
-                        );
-                      },
-                      loading: () => const SizedBox(
-                        height: 40,
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      ),
-                      error: (_, _) => _AttachmentsSection(
-                        issueId: widget.issueId,
-                        attachments: const [],
-                        onAttachFile: _attachFile,
-                      ),
-                    );
-
-                    return Column(
-                      children: [
-                        IssueCard(
-                          issue: issue,
-                          onRefresh: _refreshIssueSection,
-                          onTransitionToTesting: _showQaEngineerSelector,
-                          onFixRequested: _showFixCommentDialog,
-                          availableStatuses: availableStatuses,
-                          onStatusSelected: _handleStatusTransition,
-                          attachmentsWidget: attachmentsWidget,
-                        ),
-                        if (_showQaSelector)
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: QaEngineerSelector(
-                              issueId: widget.issueId,
-                              onTransitionComplete: _handleQaTransitionComplete,
-                            ),
+                      final attachmentsWidget = attachmentsAsync.when(
+                        data: (attachments) {
+                          return _AttachmentsSection(
+                            issueId: widget.issueId,
+                            attachments: attachments,
+                            onAttachFile: _attachFile,
+                          );
+                        },
+                        loading: () => const SizedBox(
+                          height: 40,
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+                        ),
+                        error: (_, _) => _AttachmentsSection(
+                          issueId: widget.issueId,
+                          attachments: const [],
+                          onAttachFile: _attachFile,
+                        ),
+                      );
 
-              // Комментарии - теперь часть одного скроллящегося потока
-              commentsAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
+                      return Column(
+                        children: [
+                          IssueCard(
+                            issue: issue,
+                            onRefresh: _refreshIssueSection,
+                            onTransitionToTesting: _showQaEngineerSelector,
+                            onFixRequested: _showFixCommentDialog,
+                            availableStatuses: availableStatuses,
+                            onStatusSelected: _handleStatusTransition,
+                            attachmentsWidget: attachmentsWidget,
+                          ),
+                          if (_showQaSelector)
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: QaEngineerSelector(
+                                issueId: widget.issueId,
+                                onTransitionComplete:
+                                    _handleQaTransitionComplete,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-                error: (error, _) => Center(
-                  child: Text('Ошибка: $error'),
+
+                // Комментарии - теперь часть одного скроллящегося потока
+                commentsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(child: Text('Ошибка: $error')),
+                  data: (comments) => CommentList(
+                    comments: comments,
+                    onRefresh: _refreshComments,
+                  ),
                 ),
-                data: (comments) => CommentList(
-                  comments: comments,
-                  onRefresh: _refreshComments,
-                ),
-              ),
-              
-              // Пустое пространство, чтобы последний комментарий не скрывался формой
-              const SizedBox(height: 16),
-            ],
+
+                // Пустое пространство, чтобы последний комментарий не скрывался формой
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
-      ),
 
-      // Статическая форма внизу
-      CommentForm(issueId: widget.issueId),
-    ],
-  );
-}
+        // Статическая форма внизу
+        CommentForm(issueId: widget.issueId),
+      ],
+    );
+  }
 
   Future<void> _refreshIssueSection() async {
     ref.invalidate(issueProvider(widget.issueId));
@@ -200,13 +209,11 @@ Widget build(BuildContext context) {
 
     final statusTransition = ref.read(statusTransitionProvider);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    // showDialog(
+    //   context: context,
+    //   barrierDismissible: false,
+    //   builder: (_) => const Center(child: CircularProgressIndicator()),
+    // );
 
     try {
       await statusTransition(
@@ -217,7 +224,7 @@ Widget build(BuildContext context) {
 
       if (!mounted) return;
 
-      Navigator.pop(context);
+      context.go('/');
       _refreshIssueSection();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,10 +238,7 @@ Widget build(BuildContext context) {
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: $e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: AppColors.error),
       );
     }
   }
@@ -260,7 +264,11 @@ class _AttachmentsSection extends ConsumerWidget {
           children: [
             const Text(
               'Прикреплённые файлы:',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.brandBlue,
+              ),
             ),
             const Spacer(),
             TextButton.icon(
@@ -288,11 +296,29 @@ class _AttachmentsSection extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final attachment = attachments[index];
-                final isImage = attachment.thumbnail != null;
+
+                // Картинка, если есть thumbnail ИЛИ если расширение файла похоже на изображение
+                final lowerName = attachment.name.toLowerCase();
+                final isImage =
+                    attachment.thumbnail != null ||
+                    lowerName.endsWith('.png') ||
+                    lowerName.endsWith('.jpg') ||
+                    lowerName.endsWith('.jpeg') ||
+                    lowerName.endsWith('.gif') ||
+                    lowerName.endsWith('.webp');
+
+                // URL картинки: если есть thumbnail — используем его, иначе — content
+                final imageUrl = attachment.thumbnail != null
+                    ? attachment.thumbnail!
+                    : attachment.content;
+
                 return GestureDetector(
-                  onTap: isImage
-                      ? () => showThumbnailPreview(context, ref, attachment.thumbnail!, attachment.name)
-                      : null,
+                  onTap: () => showThumbnailPreview(
+                    context,
+                    ref,
+                    imageUrl,
+                    attachment.name,
+                  ),
                   child: Container(
                     width: 80,
                     height: 80,
@@ -302,8 +328,12 @@ class _AttachmentsSection extends ConsumerWidget {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: isImage
-                        ? ThumbnailTile(thumbnailUrl: attachment.thumbnail!, size: 80)
-                        : const Icon(Icons.insert_drive_file, size: 32, color: Colors.grey),
+                        ? ThumbnailTile(thumbnailUrl: imageUrl, size: 80)
+                        : const Icon(
+                            Icons.insert_drive_file,
+                            size: 32,
+                            color: Colors.grey,
+                          ),
                   ),
                 );
               },
