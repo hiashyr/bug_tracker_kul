@@ -21,12 +21,15 @@ class CommentList extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Комментарии',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.brandBlue,
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Text(
+                'Комментарии',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.brandBlue,
+                    ),
+              ),
             ),
           ],
         ),

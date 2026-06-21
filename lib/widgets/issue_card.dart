@@ -194,8 +194,77 @@ class IssueDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _LabelText('Приоритет:'),
-        Text(issue.priority, style: AppTypography.issueDescription),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const _LabelText('Приоритет:'),
+                SizedBox(width: 6),
+                Text(issue.priority, style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 14,
+                  color: AppColors.backgroundDark,
+                )),
+              ],
+            ),
+          Column(
+            crossAxisAlignment : CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline,
+                    size: 14,
+                    color: AppColors.brandBlue,
+                  ),
+                  Text(
+                    'Создал:',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 14,
+                      color: AppColors.priorityMedium,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    issue.createdBy,
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+          children: [
+            const Icon(
+              Icons.calendar_today,
+              size: 14,
+              color: AppColors.brandBlue,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Дата: ',
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 14,
+              color: AppColors.priorityMedium,
+            ),
+          ),
+          Text(
+            _formatDate(issue.createdAt),
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 14,
+            ),
+          ),
+        ],
+                )
+            ],
+          ),
+          ],
+        ),
         const SizedBox(height: 12),
         const _LabelText('Название:'),
         Text(
@@ -254,62 +323,6 @@ class IssueDetails extends StatelessWidget {
               ],
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.person_outline,
-                size: 14,
-                color: AppColors.brandBlue,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Создал:',
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: 12,
-                  color: AppColors.priorityMedium,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                issue.createdBy,
-                style: TextStyle(
-                  fontFamily: AppTypography.fontFamily,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.calendar_today,
-                size: 12,
-                color: AppColors.brandBlue,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Дата: ',
-              style: TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 12,
-                color: AppColors.priorityMedium,
-              ),
-            ),
-            Text(
-              _formatDate(issue.createdAt),
-              style: TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),)
       ],
     );
   }

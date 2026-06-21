@@ -248,7 +248,7 @@ class _AttachmentsSection extends ConsumerWidget {
         Row(
           children: [
             const Text(
-              'Прикреплённые файлы',
+              'Прикреплённые файлы:',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
             ),
             const Spacer(),
