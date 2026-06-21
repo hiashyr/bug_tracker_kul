@@ -554,21 +554,18 @@ class _IssuesListScreenState extends ConsumerState<IssuesListScreen> {
   Widget _buildPriorityChip(String priority) {
     Color color;
     switch (priority.toLowerCase()) {
-      case 'critical':
-      case 'критический':
+      case 'критичный':
         color = AppColors.priorityCritical;
         break;
-      case 'high':
-      case 'высокий':
-        color = AppColors.priorityHigh;
+      case 'блокер':
+        color = AppColors.priorityBlocker;
         break;
-      case 'medium':
       case 'средний':
         color = AppColors.priorityMedium;
         break;
       case 'low':
       case 'низкий':
-        color = AppColors.priorityLow;
+        color = AppColors.greyDark;
         break;
       default:
         color = AppColors.greyMedium;
