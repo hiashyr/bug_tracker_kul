@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,6 +15,7 @@ import '../widgets/comment_list.dart';
 import '../widgets/fix_comment_dialog.dart';
 import '../widgets/issue_card.dart';
 import '../widgets/qa_engineer_selector.dart';
+import '../widgets/thumbnail_viewer.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
   final String issueId;
@@ -34,6 +34,30 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       context: context,
       builder: (_) => FixCommentDialog(issueId: widget.issueId),
     );
+  }
+
+  Future<void> _attachFile() async {
+    final result = await FilePicker.pickFiles(type: FileType.any, withData: true);
+    if (result == null) return;
+
+    final xFile = result.files.first.xFile;
+    final fileName = result.files.first.name;
+
+    try {
+      final bytes = await xFile.readAsBytes();
+      final apiClient = ref.read(newApiClientProvider);
+      await apiClient.uploadIssueAttachment(widget.issueId, bytes, filename: fileName);
+      if (!mounted) return;
+      ref.invalidate(attachmentsProvider(widget.issueId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Файл прикреплён: $fileName')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка прикрепления файла: $e')),
+      );
+    }
   }
 
   @override
@@ -61,14 +85,21 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
 
                   final attachmentsWidget = attachmentsAsync.when(
                     data: (attachments) {
-                      if (attachments.isEmpty) return null;
                       return _AttachmentsSection(
                         issueId: widget.issueId,
                         attachments: attachments,
+                        onAttachFile: _attachFile,
                       );
                     },
-                    loading: () => null,
-                    error: (_, __) => null,
+                    loading: () => const SizedBox(
+                      height: 40,
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    error: (_, _) => _AttachmentsSection(
+                      issueId: widget.issueId,
+                      attachments: const [],
+                      onAttachFile: _attachFile,
+                    ),
                   );
 
                   return SingleChildScrollView(
@@ -201,137 +232,76 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
 class _AttachmentsSection extends ConsumerWidget {
   final String issueId;
   final List<Attachment> attachments;
+  final VoidCallback? onAttachFile;
 
   const _AttachmentsSection({
     required this.issueId,
     required this.attachments,
+    this.onAttachFile,
   });
-
-  // Future<void> _showImagePreview(BuildContext context, WidgetRef ref, Attachment attachment) async {
-  //   if (attachment.thumbnail == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Миниатюра недоступна')),
-  //     );
-  //     return;
-  //   }
-
-  //   try {
-  //     final apiClient = ref.read(newApiClientProvider);
-  //     final bytes = await apiClient.fetchThumbnailBytes(attachment.thumbnail!);
-
-  //     if (!context.mounted) return;
-
-  //     showDialog(
-  //       context: context,
-  //       builder: (ctx) => AlertDialog(
-  //         title: Text(attachment.name, style: const TextStyle(fontSize: 16)),
-  //         content: SizedBox(
-  //           width: double.maxFinite,
-  //           child: InteractiveViewer(
-  //             child: Image.memory(bytes),
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(ctx).pop(),
-  //             child: const Text('Закрыть'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   } catch (e) {
-  //     if (!context.mounted) return;
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Ошибка загрузки: $e')),
-  //     );
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Прикреплённые файлы',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 80,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: attachments.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final attachment = attachments[index];
-              final isImage = attachment.thumbnail != null;
-              return GestureDetector(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: isImage
-                      ? _ThumbnailImage(thumbnailUrl: attachment.thumbnail!)
-                      : const Icon(Icons.insert_drive_file, size: 32, color: Colors.grey),
-                ),
-              );
-            },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Прикреплённые файлы',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.brandBlue),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: onAttachFile,
+                icon: const Icon(Icons.attach_file, size: 18),
+                label: const Text('Прикрепить файл'),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          if (attachments.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'Нет прикреплённых файлов',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+            )
+          else
+            SizedBox(
+              height: 80,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: attachments.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final attachment = attachments[index];
+                  final isImage = attachment.thumbnail != null;
+                  return GestureDetector(
+                    onTap: isImage
+                        ? () => showThumbnailPreview(context, ref, attachment.thumbnail!, attachment.name)
+                        : null,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: isImage
+                          ? ThumbnailTile(thumbnailUrl: attachment.thumbnail!, size: 80)
+                          : const Icon(Icons.insert_drive_file, size: 32, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
-  }
-}
-
-class _ThumbnailImage extends ConsumerStatefulWidget {
-  final String thumbnailUrl;
-
-  const _ThumbnailImage({required this.thumbnailUrl});
-
-  @override
-  ConsumerState<_ThumbnailImage> createState() => _ThumbnailImageState();
-}
-
-class _ThumbnailImageState extends ConsumerState<_ThumbnailImage> {
-  Uint8List? _bytes;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final apiClient = ref.read(newApiClientProvider);
-      final bytes = await apiClient.fetchThumbnailBytes(widget.thumbnailUrl);
-      if (mounted) {
-        setState(() {
-          _bytes = bytes;
-          _loading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-    }
-    if (_bytes != null) {
-      return Image.memory(_bytes!, fit: BoxFit.cover, width: 80, height: 80);
-    }
-    return const Icon(Icons.broken_image, size: 32, color: Colors.grey);
   }
 }

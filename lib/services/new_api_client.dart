@@ -455,6 +455,28 @@ Future<Comment> addingErrorComment(String commentText, {List<String>? attachment
       'загрузка миниатюры',
     );
   }
+
+  /// Прикрепляет файл напрямую к задаче и возвращает Attachment (содержит thumbnail).
+  /// POST /v3/issues/{issueId}/attachments/
+  Future<Attachment> uploadIssueAttachment(String issueId, Uint8List bytes, {String? filename}) {
+    return _executeRequest<Attachment>(
+      () async {
+        final formData = FormData.fromMap({
+          'file': MultipartFile.fromBytes(bytes, filename: filename),
+        });
+        final response = await _dio.post(
+          '/issues/$issueId/attachments/',
+          data: formData,
+          options: Options(
+            contentType: 'multipart/form-data',
+          ),
+        );
+        return Attachment.fromJson(response.data as Map<String, dynamic>);
+      },
+      'прикрепление файла к задаче',
+    );
+  }
+
   void dispose() {
     _dio.close();
   }
