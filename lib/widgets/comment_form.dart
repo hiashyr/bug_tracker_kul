@@ -50,13 +50,14 @@ class _CommentFormState extends ConsumerState<CommentForm> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Комментарий добавлен'),
-        backgroundColor: Colors.green,),
+        backgroundColor: AppColors.success,),
       );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка при добавлении: $e')),
+        SnackBar(content: Text('Ошибка при добавлении: $e'),
+        backgroundColor: AppColors.error,),
       );
     } finally {
       if (mounted) {

@@ -50,12 +50,14 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       if (!mounted) return;
       ref.invalidate(attachmentsProvider(widget.issueId));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Файл прикреплён: $fileName')),
+        SnackBar(content: Text('Файл прикреплён: $fileName'),
+        backgroundColor: AppColors.success,),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка прикрепления файла: $e')),
+        SnackBar(content: Text('Ошибка прикрепления файла: $e'),
+        backgroundColor: AppColors.error,),
       );
     }
   }

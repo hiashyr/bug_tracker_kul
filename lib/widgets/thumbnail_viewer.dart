@@ -106,7 +106,8 @@ Future<void> showThumbnailPreview(
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Ошибка загрузки: $e')),
+      SnackBar(content: Text('Ошибка загрузки: $e'),
+      backgroundColor: AppColors.error,),
     );
   }
 }

@@ -135,13 +135,16 @@ class _FixCommentDialogState extends ConsumerState<FixCommentDialog> {
                                 _attachments.add(attachment);
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Файл прикреплён: $fileName')),
+                                SnackBar(content: Text('Файл прикреплён: $fileName'),
+                                backgroundColor: AppColors.success,),
+                                
                               );
                             }
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Ошибка загрузки файла: $e')),
+                                SnackBar(content: Text('Ошибка загрузки файла: $e'),
+                                backgroundColor: AppColors.error,),
                               );
                             }
                           }

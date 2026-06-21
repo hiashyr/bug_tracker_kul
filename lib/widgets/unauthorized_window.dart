@@ -41,7 +41,8 @@ class UnauthorizedView extends StatelessWidget {
                 } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Ошибка авторизации: $e')),
+                    SnackBar(content: Text('Ошибка авторизации: $e'),
+                    backgroundColor: AppColors.error,),
                   );
                 }
               },
