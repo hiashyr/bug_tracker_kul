@@ -61,49 +61,53 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final issueAsync = ref.watch(issueProvider(widget.issueId));
-    final commentsAsync = ref.watch(commentsProvider(widget.issueId));
-    final statusesAsync = ref.watch(statusesProvider(widget.issueId));
-    final attachmentsAsync = ref.watch(attachmentsProvider(widget.issueId));
+Widget build(BuildContext context) {
+  final issueAsync = ref.watch(issueProvider(widget.issueId));
+  final commentsAsync = ref.watch(commentsProvider(widget.issueId));
+  final statusesAsync = ref.watch(statusesProvider(widget.issueId));
+  final attachmentsAsync = ref.watch(attachmentsProvider(widget.issueId));
 
-    return Column(
-        children: [
-          // Блок карточки задачи
-          Center(
-            child: issueAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (error, _) => Center(
-                  child: Text('Ошибка: $error'),
-                ),
-                data: (issue) {
-                  final availableStatuses = statusesAsync.whenOrNull(
-                    data: (statuses) => statuses,
-                  );
+  return Column(
+    children: [
+      // Скроллящаяся область: информация о задаче + комментарии
+      Expanded(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Карточка задачи
+              Center(
+                child: issueAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, _) => Center(
+                    child: Text('Ошибка: $error'),
+                  ),
+                  data: (issue) {
+                    final availableStatuses = statusesAsync.whenOrNull(
+                      data: (statuses) => statuses,
+                    );
 
-                  final attachmentsWidget = attachmentsAsync.when(
-                    data: (attachments) {
-                      return _AttachmentsSection(
+                    final attachmentsWidget = attachmentsAsync.when(
+                      data: (attachments) {
+                        return _AttachmentsSection(
+                          issueId: widget.issueId,
+                          attachments: attachments,
+                          onAttachFile: _attachFile,
+                        );
+                      },
+                      loading: () => const SizedBox(
+                        height: 40,
+                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                      error: (_, _) => _AttachmentsSection(
                         issueId: widget.issueId,
-                        attachments: attachments,
+                        attachments: const [],
                         onAttachFile: _attachFile,
-                      );
-                    },
-                    loading: () => const SizedBox(
-                      height: 40,
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
-                    error: (_, _) => _AttachmentsSection(
-                      issueId: widget.issueId,
-                      attachments: const [],
-                      onAttachFile: _attachFile,
-                    ),
-                  );
+                      ),
+                    );
 
-                  return SingleChildScrollView(
-                    child: Column(
+                    return Column(
                       children: [
                         IssueCard(
                           issue: issue,
@@ -123,32 +127,37 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                             ),
                           ),
                       ],
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-          ),
 
-          // Блок комментариев - занимает всю доступную ширину
-          Expanded(
-            flex: 3,
-            child: commentsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
+              // Комментарии - теперь часть одного скроллящегося потока
+              commentsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, _) => Center(
+                  child: Text('Ошибка: $error'),
+                ),
+                data: (comments) => CommentList(
+                  comments: comments,
+                  onRefresh: _refreshComments,
+                ),
               ),
-              error: (error, _) => Center(
-                child: Text('Ошибка: $error'),
-              ),
-              data: (comments) => CommentList(
-                comments: comments,
-                onRefresh: _refreshComments,
-              ),
-            ),
+              
+              // Пустое пространство, чтобы последний комментарий не скрывался формой
+              const SizedBox(height: 16),
+            ],
           ),
-          CommentForm(issueId: widget.issueId),
-        ],
-    );
-  }
+        ),
+      ),
+
+      // Статическая форма внизу
+      CommentForm(issueId: widget.issueId),
+    ],
+  );
+}
 
   Future<void> _refreshIssueSection() async {
     ref.invalidate(issueProvider(widget.issueId));

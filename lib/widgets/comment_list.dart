@@ -13,41 +13,44 @@ class CommentList extends StatelessWidget {
     this.onRefresh,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Text(
-                'Комментарии',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.brandBlue,
-                    ),
-              ),
+@override
+Widget build(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Text(
+              'Комментарии',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brandBlue,
+                  ),
             ),
-          ],
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      if (comments.isEmpty)
+        const _EmptyCommentsState()
+      else
+        Column(
+          children: List.generate(
+            comments.length,
+            (index) => Column(
+              children: [
+                _CommentCard(comment: comments[index]),
+                if (index < comments.length - 1) const SizedBox(height: 8),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: comments.isEmpty
-              ? const _EmptyCommentsState()
-              : ListView.separated(
-                  itemCount: comments.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    return _CommentCard(comment: comments[index]);
-                  },
-                ),
-        ),
-      ],
-    );
-  }
+    ],
+  );
+}
 }
 
 class _EmptyCommentsState extends StatelessWidget {
